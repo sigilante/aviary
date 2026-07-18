@@ -1,6 +1,7 @@
 """SPEC.md §12 items 2, 3, 10: bird-registry correctness.
 
-Sources and the one correction found are documented in fixtures_birds.py.
+Sources and the three corrections found are documented in
+fixtures_birds.py.
 """
 
 from __future__ import annotations
@@ -14,7 +15,7 @@ from aviary_kernel.parser import parse_cell
 from aviary_kernel.reduce import reduce
 from aviary_kernel.terms import Atom, apply, pretty
 
-from .fixtures_birds import RATHMAN_RULE, RATHMAN_SK, CL_ORACLE
+from .fixtures_birds import RATHMAN_RULE, RATHMAN_SK, CL_RULE, CL_ORACLE
 
 
 def _parse_expr(src: str):
@@ -49,19 +50,32 @@ def test_rule_matches_table_exactly(bird):
 
 
 @pytest.mark.parametrize("bird", BIRDS, ids=lambda b: b.name)
-def test_rule_matches_rathman_source(bird):
-    """Cross-check against Chris Rathman's chart (the Wolfram dataset's
-    own cited primary source; see fixtures_birds.py header) -- SPEC.md
-    §12 item 2."""
-    if bird.name not in RATHMAN_RULE:
-        pytest.skip(f"{bird.name} not present in the Rathman fixture")
-    expected = RATHMAN_RULE[bird.name]
+def test_rule_matches_independent_source(bird):
+    """Cross-check against an independent, external source -- SPEC.md
+    §12 item 2. Every bird is covered by one of two sources: Chris
+    Rathman's chart (the Wolfram dataset's own cited primary source) for
+    48 of the 50 birds, or combinatorylogic.com's table for the two
+    Rathman's chart doesn't list (Φ, Ψ). See fixtures_birds.py's header
+    for the full source citations and the three corrections made while
+    transcribing them (V*, B3, and Y all needed a documented correction
+    rather than a literal copy of the source column)."""
+    if bird.name in RATHMAN_RULE:
+        expected = RATHMAN_RULE[bird.name]
+        source = "Rathman"
+    elif bird.name in CL_RULE:
+        expected = CL_RULE[bird.name]
+        source = "combinatorylogic.com"
+    else:
+        pytest.fail(
+            f"{bird.name}: no independent-source fixture in RATHMAN_RULE or "
+            f"CL_RULE -- add one to fixtures_birds.py rather than skip"
+        )
     frees = _fresh_vars(bird.arity)
     formal_map = {f: v.name for f, v in zip(bird.formals, frees)}
-    # our rule, renamed a,b,c -> x0,x1,x2 in the same order Rathman uses
+    # our rule, renamed a,b,c -> x0,x1,x2 in the same order the source uses
     ours = pretty(bird.rule, display=lambda nm: formal_map.get(nm, nm))
     theirs = pretty(_parse_expr(expected), display=lambda nm: formal_map.get(nm, nm))
-    assert ours == theirs, f"{bird.name}: SPEC/registry rule {ours!r} != Rathman {theirs!r}"
+    assert ours == theirs, f"{bird.name}: SPEC/registry rule {ours!r} != {source} {theirs!r}"
 
 
 @pytest.mark.parametrize("bird", [b for b in BIRDS if b.ski is None], ids=lambda b: b.name)

@@ -18,15 +18,23 @@ Verification (§5.5, done by the implementer against the two source URLs):
 Every row of SPEC.md's §5.2 table was cross-checked against both sources
 and confirmed correct, INCLUDING the once/twice-removed permuting birds
 (C*, C**, F*, F**, R*, R**, V*, V**) and the Jay -- the classic
-transcription-error spots the spec calls out. One noteworthy finding: in
-Rathman's own chart, the "Function Abstraction" (lambda-rule) column for
-V* is misprinted as `abcd.acbd` -- but Rathman's own "Combinator" formula
-for V* (`C*F*`) evaluates (by unfolding Rathman's own C* and F* rows) to
-`a d b c`, which matches both the SPEC's `V* a b c d = a d b c` and an
-independent cross-check against Rathman's own V** row (`BV*` unfolds to
-`a b e c d`, consistent only with V* = `a d b c`, not `a c b d`). So the
-lambda column has an internal typo; no correction to the SPEC table was
-needed anywhere.
+transcription-error spots the spec calls out. No correction to the SPEC
+table was needed anywhere; three transcription bugs turned up in the
+*source* material itself while building the test fixtures (see the
+header of tests/fixtures_birds.py for the full reasoning):
+
+  1. Rathman's own "Function Abstraction" column for V* is misprinted as
+     `abcd.acbd` -- but Rathman's own "Combinator" formula for V*
+     (`C*F*`) evaluates, by unfolding Rathman's own C* and F* rows, to
+     `a d b c`, matching both SPEC.md and an independent cross-check
+     against Rathman's own V** row. Internal typo in that one column.
+  2. Rathman's fully-expanded "SK Combinator" column is byte-identical
+     for B2 and B3 (arities 5 and 4 respectively) -- a copy/paste
+     duplicate, confirmed in the raw HTML.
+  3. Rathman's row for Y reuses the same Symbol-font "l -> λ" HTML
+     entity for both the rule's outer binder and its inner
+     self-reference (which should read "Y"), i.e. a copy/paste slip
+     rather than a different encoding.
 """
 
 from __future__ import annotations

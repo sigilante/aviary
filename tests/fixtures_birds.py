@@ -19,16 +19,12 @@ source URLs named in SPEC.md §1/§5.5:
 RATHMAN_RULE: canonical bird name -> that bird's reduction rule RHS, in
 Aviary surface syntax, transcribed from Rathman's "Function Abstraction"
 column. Used by test_birds.py to assert every registry rule matches this
-independently-sourced rule *exactly* (SPEC.md §12 item 2). `Y`, `Φ`
-(Phoenix) and `Ψ` (Psi) are absent from this dict: Phoenix/Psi simply
-aren't in Rathman's chart (they came from combinatorylogic.com instead,
-see CL note in test_birds.py), and Y's row in Rathman's raw HTML uses a
-"symbol font" character-mapping trick for its self-reference that our
-plain-text extraction can't recover cleanly (Y is independently verified
-elsewhere via its explicit `ski` override, checked against Curry's
-published standard form for the Sage Bird).
+independently-sourced rule *exactly* (SPEC.md §12 item 2). `Φ` (Phoenix)
+and `Ψ` (Psi) are absent from this dict -- they simply aren't in
+Rathman's chart at all -- and are instead checked against `CL_RULE`
+(combinatorylogic.com's table, which does list them; see below).
 
-TWO SOURCE DISCREPANCIES were found and corrected here (not silently --
+THREE SOURCE DISCREPANCIES were found and corrected here (not silently --
 noted so a human reviewer can double-check the reasoning):
 
 1. Rathman's own "Function Abstraction" column for V* (Vireo Once
@@ -57,12 +53,32 @@ noted so a human reviewer can double-check the reasoning):
    for that row. (Rathman's separate, coarser "Combinator" column does
    correctly distinguish them: `B(BBB)B` for B2 vs `B(BB)B` for B3.)
 
+3. Rathman's row for Y (Sage Bird) renders its "Function Abstraction"
+   text as `<font face="symbol">l</font>a.a(<font face="symbol">l</font>a)`
+   in the raw HTML -- i.e. the *same* HTML entity, `&#108;` (ASCII 'l'
+   rendered in a Symbol-encoded font, where 'l' is how this whole chart
+   spells lambda throughout: 'l' -> λ in Adobe Symbol encoding), is used
+   for BOTH the outer binder ("λa.") AND the self-reference that should
+   read "Y" ("a(Ya)"). Every other row in the chart uses this same
+   Symbol-font 'l'-for-λ trick correctly, exactly once, for the leading
+   binder; Y's row is alone in reusing it a second time where "Y" was
+   clearly intended -- a copy/paste slip, not a different encoding we
+   failed to decode. We record the value every other source (SPEC.md,
+   Curry) agrees on, `a (Y a)`, rather than the source's literal (and
+   nonsensical as a rule -- "a applied to the binder itself" isn't a
+   term) `a(λa)`.
+
 RATHMAN_SK: canonical bird name -> a fully-expanded S/K (Curry-basis)
 term, transcribed from Rathman's "SK Combinator" column. Used as a
 behavioral oracle (SPEC.md §12 item 3): `bird x1..xn` and
 `oracle x1..xn` must reduce to the same normal form, even though the
 derived S/K/I form our own bracket-abstraction produces will generally
 differ syntactically.
+
+CL_RULE: canonical bird name -> that bird's reduction rule RHS,
+transcribed from combinatorylogic.com's "Function Abstraction" column,
+for the two birds absent from Rathman's chart (Φ, Ψ). Checked the same
+way as RATHMAN_RULE (SPEC.md §12 item 2), just against the other source.
 
 CL_ORACLE: canonical bird name -> a term (over other registry birds,
 not necessarily pure SKI) transcribed from combinatorylogic.com's "CR1"
@@ -118,6 +134,7 @@ RATHMAN_RULE: dict[str, str] = {
     'W*': 'a b c c',
     'W**': 'a b c d d',
     'Ê': 'a (b c d) (e f g)',
+    'Y': 'a (Y a)',  # corrected; see module docstring, discrepancy 3
 }
 
 RATHMAN_SK: dict[str, str] = {
@@ -167,6 +184,11 @@ RATHMAN_SK: dict[str, str] = {
     'W*': '(S(K((S(K(S((S(K((S((S K)K))((S K)K))))((S(K((S(K S))K)))((S(K(S((S K)K))))K))))))K)))',
     'W**': '(S(K(S(K((S(K(S((S(K((S((S K)K))((S K)K))))((S(K((S(K S))K)))((S(K(S((S K)K))))K))))))K)))))',
     'Ê': '((S(K((S(K((S(K S))K)))((S(K S))K))))(S(K((S(K((S(K S))K)))((S(K S))K)))))',
+}
+
+CL_RULE: dict[str, str] = {
+    "Φ": "a (b d) (c d)",
+    "Ψ": "a (b c) (b d)",
 }
 
 CL_ORACLE: dict[str, str] = {
