@@ -145,13 +145,13 @@ interactively from a terminal `|shoe` session and as a
 `SPEC-DESK.md` for the full desk-level spec.
 
 **Magics:** `%ski`, `%sk`, `%fuel`, `%defs`, `%undef` (SPEC-DESK.md's v1
-scope), plus **`%trace`** (SPEC.md §6.3/§9's step-by-step reduction trace --
-originally deferred to v1.1 by SPEC-DESK.md §1, since implemented). The
-other deferred magics (`%whnf`, `%birds`, `%whatis`, `%ascii`) are not yet
-built. `%trace`'s output format matches the Python kernel's exactly: each
-line is the contracted combinator's *canonical* name (not its Unicode
-display form) left-padded to 4 columns, the step number right-padded to 4
-columns, two spaces, then the term -- e.g. `%trace K x1 (M x1)` prints
+scope), plus four originally-deferred-to-v1.1 magics since implemented:
+**`%trace`**, **`%whnf`**, **`%size`**, and **`%ascii`**. `%birds` and
+`%whatis` are not yet built. `%trace`'s output format matches the Python
+kernel's exactly: each line is the contracted combinator's *canonical* name
+(not its Unicode display form) left-padded to 4 columns, the step number
+right-padded to 4 columns, two spaces, then the term -- e.g. `%trace K x1
+(M x1)` prints
 
 ```
        0  K x1 (M x1)
@@ -161,6 +161,25 @@ K      1  x1
 Traces obey the session's fuel the same as a plain expression (a
 fuel/size warning line, never an error) and elide the middle beyond 200
 lines when running under the default (unraised) fuel.
+
+`%whnf expr` (SPEC.md §6.1/§9) reduces only to weak head normal form --
+it contracts head-position redexes but never descends into arguments to
+normalize them, so `%whnf B x1 (M x2)` prints `B x1 (M x2)  [whnf, 0
+steps]` (stuck: B needs 3 args, has 2) where the plain expression `B x1
+(M x2)` would print `B x1 (x2 x2)  [1 step]` (arguments get normalized
+once the head is stuck). Matching the Python reference exactly, `%whnf`'s
+status is always `whnf` (never `normal`, even at 0 steps) and it prints
+only the one result line -- no separate "⚠" warning line on fuel/size
+exhaustion, unlike a plain expression or `%trace`.
+
+`%size N` (SPEC.md §9) is `%fuel`'s sibling: it gets/sets the session's
+`max_size` term-size ceiling (previously a fixed 100,000-atom constant,
+now per-session state, same as fuel).
+
+`%ascii on|off` (SPEC.md §9) toggles the session's display script for
+bird names whose canonical name differs from their preferred display
+form -- e.g. `Q1` prints as `Q₁` by default (`%ascii off`) and as `Q1`
+under `%ascii on`.
 
 ### Install
 

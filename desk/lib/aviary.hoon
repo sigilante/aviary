@@ -28,8 +28,10 @@
 ::
 /-  *aviary
 |%
-::  +size-cap: fixed term-size ceiling (SPEC-DESK.md §4.3), atoms
-::  +default-fuel: default step budget for a fresh session
+::  +size-cap: default term-size ceiling (SPEC-DESK.md §4.3; session-
+::  adjustable via %size, SPEC.md §9), atoms
+::  +default-fuel: default step budget for a fresh session (session-
+::  adjustable via %fuel)
 ::
 ++  size-cap      100.000
 ++  default-fuel  10.000
@@ -37,7 +39,7 @@
 ::  +default-env: fresh per-session state (used by the agent on first
 ::  contact with a session)
 ::
-++  default-env  ^-(env [~ default-fuel])
+++  default-env  ^-(env [~ default-fuel size-cap %.n])
 ::
 ::  +y-ski: Y's explicit S/K/I override (SPEC.md §5.2, Curry's form) --
 ::  bracket abstraction cannot derive a finite S/K/I form for a genuinely
@@ -201,21 +203,29 @@
   ^-  @t
   (~(gut by aliases) name name)
 ::
+::  +disp-name: display form of a name, honoring the session's %ascii
+::  preference (SPEC.md §9's "%ascii on|off"). ascii=%.y shows a bird's
+::  canonical name (already ASCII for every bird except Ê/Φ/Ψ, whose
+::  canonical name IS the Unicode glyph -- same as the Python reference's
+::  `bird.name if ascii_mode else bird.display`, and those three birds'
+::  name/display are identical, so ascii toggling is a no-op for them,
+::  matching the Python registry exactly).
+::
 ++  disp-name
-  |=  name=@t
+  |=  [name=@t ascii=?]
   ^-  @t
   =/  rname  (resolve-name name)
   =/  b  (~(get by birds-map) rname)
-  ?^  b  disp.u.b
+  ?^  b  ?:(ascii name.u.b disp.u.b)
   ?:  =(rname 'Θ')  'Θ'
   name
 ::
 ++  pretty
-  |=  t=term
+  |=  [t=term ascii=?]
   ^-  tape
-  ?@  t  (trip (disp-name t))
-  =/  fn-s  (pretty fun.t)
-  =/  arg-s  (pretty arg.t)
+  ?@  t  (trip (disp-name t ascii))
+  =/  fn-s  (pretty fun.t ascii)
+  =/  arg-s  (pretty arg.t ascii)
   =/  arg-s2  ?:(?=(^ arg.t) (weld "(" (weld arg-s ")")) arg-s)
   (weld fn-s (weld " " arg-s2))
 ::
@@ -379,7 +389,7 @@
   |=  [session=env t=term]
   ^-  [rt=term steps=@ud status=?(%normal %fuel %size)]
   =/  limit-steps  fuel.session
-  =/  limit-size   size-cap
+  =/  limit-size   size.session
   =/  d0  (decomp t)
   =/  md=mode  [%descend hed.d0 args.d0]
   =/  stack=(list frame)  ~
@@ -438,7 +448,7 @@
   |=  [session=env t=term]
   ^-  [rt=term steps=@ud status=?(%normal %fuel %size) trace=(list trace-step)]
   =/  limit-steps  fuel.session
-  =/  limit-size   size-cap
+  =/  limit-size   size.session
   =/  d0  (decomp t)
   =/  md=mode  [%descend hed.d0 args.d0]
   =/  stack=(list frame)  ~
@@ -482,6 +492,43 @@
       $(stack [[hed.fr done2 todo.fr] t.stack], md [%descend hed.d3 args.d3])
     $(stack t.stack, md [%ascend (mk-app hed.fr done2)])
   ==
+::
+::  +reduce-whnf: %whnf (v1.1, SPEC.md §6.1/§9) -- contract head-position
+::  redexes only, stopping *before* SPEC.md §6.1 step 4 (never recurse into
+::  arguments to normalize them). Since arguments are never visited, there
+::  is no stack/frame bookkeeping at all here -- it's the +reduce %descend
+::  arm alone, returning the instant the head is stuck. Mirrors the Python
+::  reference (aviary_kernel/reduce.py's `whnf_only` path) exactly,
+::  including its most surprising property: the status is %whnf (never
+::  %normal) even when zero contractions happened, because "already in
+::  WHNF" and "reduced down to WHNF" are the same terminal state here.
+::
+++  reduce-whnf
+  |=  [session=env t=term]
+  ^-  [rt=term steps=@ud status=?(%whnf %fuel %size)]
+  =/  limit-steps  fuel.session
+  =/  limit-size   size.session
+  =/  d0  (decomp t)
+  =/  hed=@t  hed.d0
+  =/  ar=(list term)  args.d0
+  =/  steps=@ud  0
+  |-
+  ^-  [term @ud ?(%whnf %fuel %size)]
+  ?:  (gte steps limit-steps)
+    [(mk-app hed ar) steps %fuel]
+  =/  c  (lookup-comb session hed)
+  ?.  &(?=(^ c) (gte (lent ar) arity.u.c))
+    [(mk-app hed ar) steps %whnf]
+  =/  consumed  (scag arity.u.c ar)
+  =/  rest      (slag arity.u.c ar)
+  =/  sub       (subst body.u.c (zip-map formals.u.c consumed))
+  =/  d1  (decomp sub)
+  =/  args2  (weld args.d1 rest)
+  =/  steps2  +(steps)
+  =/  newterm  (mk-app hed.d1 args2)
+  ?:  (gth (term-size newterm) limit-size)
+    [newterm steps2 %size]
+  $(hed hed.d1, ar args2, steps steps2)
 ::
 ::  --- bracket abstraction / basis expansion (SPEC-DESK.md §4.4) ---------
 ::
@@ -580,14 +627,14 @@
 ::  Ê contracts show "Ê" but Q1 shows "Q1", never "Q₁".
 ::
 ++  render-trace-line
-  |=  step=trace-step
+  |=  [step=trace-step ascii=?]
   ^-  tape
   =/  label  ?~(contracted.step "" (trip u.contracted.step))
   ;:  weld
     (pad-right-min4 label)
     (pad-left-min4 (render-ud step.step))
     "  "
-    (pretty tm.step)
+    (pretty tm.step ascii)
   ==
 ::
 ::  +format-trace: render a trace to lines, eliding the middle beyond 200
@@ -597,9 +644,9 @@
 ::  observable in practice).
 ::
 ++  format-trace
-  |=  [tr=(list trace-step) elide=?]
+  |=  [tr=(list trace-step) elide=? ascii=?]
   ^-  (list tape)
-  =/  lines  (turn tr render-trace-line)
+  =/  lines  (turn tr |=(s=trace-step (render-trace-line s ascii)))
   =/  n  (lent lines)
   ?.  &(elide (gth n 200))
     lines
@@ -734,7 +781,7 @@
   ?:  ?=(%| -.parsed)  parsed
   =/  ex  (expand session p.parsed ~ to-sk)
   ?:  ?=(%| -.ex)  ex
-  [%& [(pretty p.ex)]~ session]
+  [%& [(pretty p.ex ascii.session)]~ session]
 ::
 ::  +magic-trace: %trace expr (v1.1, SPEC.md §6.3/§9) -- full step-by-step
 ::  reduction, one numbered line per contraction; fuel/size exhaustion is
@@ -749,13 +796,13 @@
   ?:  ?=(%| -.parsed)  parsed
   =/  res  (reduce-traced session p.parsed)
   =/  elide  =(fuel.session default-fuel)
-  =/  lines  (format-trace trace.res elide)
+  =/  lines  (format-trace trace.res elide ascii.session)
   =/  warn=(list tape)
     ?:  =(status.res %fuel)
       [(weld "⚠ no normal form after " (weld (render-ud steps.res) " steps (fuel exhausted)"))]~
     ?:  =(status.res %size)
       :~  %+  weld  "⚠ term exceeded "
-          (weld (render-ud size-cap) (weld " atoms after " (weld (render-ud steps.res) " steps")))
+          (weld (render-ud size.session) (weld " atoms after " (weld (render-ud steps.res) " steps")))
       ==
     ~
   [%& (weld lines warn) session]
@@ -778,14 +825,79 @@
     [%| (weld "%fuel expects a positive integer, got '" (weld raw "'"))]
   [%& [(weld "fuel (max_steps) set to " (render-ud u.n))]~ session(fuel u.n)]
 ::
+::  +magic-size: %size N (SPEC.md §9) -- same shape as %fuel, but for the
+::  session's max_size (term-size ceiling); bare form prints the current
+::  value.
+::
+++  magic-size
+  |=  [session=env rest=(list tok)]
+  ^-  (each [out=(list tape) session=env] tape)
+  ?~  rest
+    [%& [(weld "size (max_size) = " (render-ud size.session))]~ session]
+  ?.  =((lent rest) 1)
+    [%| "%size expects a positive integer"]
+  =/  nm  (toks-to-names rest)
+  ?~  nm  [%| "%size expects a positive integer"]
+  ?~  u.nm  [%| "%size expects a positive integer"]
+  =/  raw  (trip i.u.nm)
+  =/  n  (parse-ud raw)
+  ?~  n
+    [%| (weld "%size expects a positive integer, got '" (weld raw "'"))]
+  ?:  =(u.n 0)
+    [%| (weld "%size expects a positive integer, got '" (weld raw "'"))]
+  [%& [(weld "size (max_size) set to " (render-ud u.n))]~ session(size u.n)]
+::
+::  +magic-whnf: %whnf expr (SPEC.md §6.1/§9) -- reduce to weak head normal
+::  form only (+reduce-whnf never recurses into arguments). Status is
+::  always %whnf unless fuel/size cuts it off first -- see +reduce-whnf's
+::  header comment for why there is no %normal case here. Mirrors the
+::  Python reference's `_finish_reduction` exactly, including the detail
+::  that it prints only the one result line -- no separate "⚠" warning
+::  line on fuel/size exhaustion (unlike a plain expression or %trace).
+::
+++  magic-whnf
+  |=  [session=env rest=(list tok)]
+  ^-  (each [out=(list tape) session=env] tape)
+  ?~  rest  [%| "%whnf expects an expression argument"]
+  =/  parsed  (parse-expr-all rest)
+  ?:  ?=(%| -.parsed)  parsed
+  =/  res  (reduce-whnf session p.parsed)
+  =/  txt  (pretty rt.res ascii.session)
+  =/  suffix=tape
+    ?:  =(status.res %whnf)
+      ;:  weld
+        "  [whnf, "  (render-ud steps.res)  " step"
+        ?:(=(steps.res 1) "" "s")  "]"
+      ==
+    (weld "  [" (weld (render-ud steps.res) " steps]"))
+  [%& [(weld txt suffix)]~ session]
+::
+::  +magic-ascii: %ascii on|off (SPEC.md §9) -- toggles the session's
+::  display-script preference; bare/garbled args are a MagicError (no
+::  "current value" form for this one -- SPEC.md's table gives %ascii only
+::  the on|off shape, unlike %fuel/%size's bare-prints-current form).
+::
+++  magic-ascii
+  |=  [session=env rest=(list tok)]
+  ^-  (each [out=(list tape) session=env] tape)
+  ?.  =((lent rest) 1)
+    [%| "%ascii expects 'on' or 'off'"]
+  =/  nm  (tok-atom-name (snag 0 rest))
+  ?~  nm  [%| "%ascii expects 'on' or 'off'"]
+  ?:  =(u.nm 'on')
+    [%& ["ascii mode on"]~ session(ascii %.y)]
+  ?:  =(u.nm 'off')
+    [%& ["ascii mode off"]~ session(ascii %.n)]
+  [%| "%ascii expects 'on' or 'off'"]
+::
 ++  render-def
-  |=  [p=@t q=def]
+  |=  [p=@t q=def ascii=?]
   ^-  tape
   ?-  -.q
-    %alias  (weld (trip p) (weld " := " (pretty body.q)))
+    %alias  (weld (trip p) (weld " := " (pretty body.q ascii)))
     %rule
       ;:  weld
-        (trip p)  " "  (join-sp vars.q)  " -> "  (pretty rhs.q)
+        (trip p)  " "  (join-sp vars.q)  " -> "  (pretty rhs.q ascii)
         "  (arity "  (render-ud arity.q)  ")"
       ==
   ==
@@ -800,7 +912,7 @@
   ^-  (each [out=(list tape) session=env] tape)
   =/  ks  (sort ~(tap by defs.session) def-lth)
   ?~  ks  [%& ["(no user definitions)"]~ session]
-  [%& (turn ks render-def) session]
+  [%& (turn ks |=([p=@t q=def] (render-def p q ascii.session))) session]
 ::
 ++  magic-undef
   |=  [session=env rest=(list tok)]
@@ -821,13 +933,16 @@
   ?:  =(name '%ski')    (magic-ski session rest %.n)
   ?:  =(name '%sk')     (magic-ski session rest %.y)
   ?:  =(name '%trace')  (magic-trace session rest)
+  ?:  =(name '%whnf')   (magic-whnf session rest)
   ?:  =(name '%fuel')   (magic-fuel session rest)
+  ?:  =(name '%size')   (magic-size session rest)
+  ?:  =(name '%ascii')  (magic-ascii session rest)
   ?:  =(name '%defs')   (magic-defs session rest)
   ?:  =(name '%undef')  (magic-undef session rest)
   :-  %|
   %+  weld  "unknown magic '"
   %+  weld  (trip name)
-  "'; available: %ski, %sk, %trace, %fuel, %defs, %undef"
+  "'; available: %ski, %sk, %trace, %whnf, %fuel, %size, %ascii, %defs, %undef"
 ::
 ::  --- statement handlers --------------------------------------------------
 ::
@@ -837,7 +952,7 @@
   =/  parsed  (parse-expr-all toks)
   ?:  ?=(%| -.parsed)  parsed
   =/  res  (reduce session p.parsed)
-  =/  txt  (pretty rt.res)
+  =/  txt  (pretty rt.res ascii.session)
   =/  suffix=tape
     ?:  &(=(status.res %normal) =(steps.res 0))
       "  [normal form]"
@@ -850,7 +965,7 @@
     ?:  =(status.res %fuel)
       :~  (weld "⚠ no normal form after " (weld (render-ud steps.res) " steps (fuel exhausted)"))  ==
     ?:  =(status.res %size)
-      :~  (weld "⚠ term exceeded " (weld (render-ud size-cap) (weld " atoms after " (weld (render-ud steps.res) " steps"))))  ==
+      :~  (weld "⚠ term exceeded " (weld (render-ud size.session) (weld " atoms after " (weld (render-ud steps.res) " steps"))))  ==
     ~
   [%& (weld [line1]~ extra) session]
 ::
@@ -873,7 +988,7 @@
   ?:  (is-builtin-name name)
     [%| (weld "cannot shadow built-in '" (weld (trip name) "'"))]
   =/  env2  session(defs (~(put by defs.session) name [%alias p.parsed]))
-  =/  conf  (weld "defined " (weld (trip name) (weld " := " (pretty p.parsed))))
+  =/  conf  (weld "defined " (weld (trip name) (weld " := " (pretty p.parsed ascii.session))))
   [%& [conf]~ env2]
 ::
 ++  run-rule
@@ -904,7 +1019,7 @@
   =/  conf
     ;:  weld
       "defined "  (trip name)  " (arity "  (render-ud (lent vars))  "): "
-      (trip name)  " "  (join-sp vars)  " -> "  (pretty p.parsed)
+      (trip name)  " "  (join-sp vars)  " -> "  (pretty p.parsed ascii.session)
     ==
   [%& [conf]~ env2]
 ::

@@ -259,5 +259,101 @@
     ==
   ==
 ::
-;:  weld  g1  g2  g3  g4  g5a  g5b  g6  g7
+::  --- §8+: %whnf (v1.1, added post-v1 per SPEC.md §6.1/§9) ----------------
+::
+=/  g8
+  ^-  (list tape)
+  %-  zing
+  :~
+    ::  a head redex fully consumes its args and stops -- same result a
+    ::  full reduce would give when the discarded arg is never forced
+    =/  r1  (run e0 "%whnf K x1 (M x1)")
+    (ck =(out.r1 ["x1  [whnf, 1 step]"]~) "whnf:head-redex")
+  ::
+    ::  the defining difference from a full reduce: an under-applied head
+    ::  (B needs 3 args, has 2) is already stuck, so %whnf stops at 0
+    ::  steps *without* descending into the arguments -- (M x2) is left
+    ::  wholly unreduced, whereas a plain expression normalizes it
+    =/  r2  (run e0 "%whnf B x1 (M x2)")
+    =/  r3  (run e0 "B x1 (M x2)")
+    %-  zing
+    :~  (ck =(out.r2 ["B x1 (M x2)  [whnf, 0 steps]"]~) "whnf:stuck-head-no-descend")
+        (ck =(out.r3 ["B x1 (x2 x2)  [1 step]"]~) "whnf:plain-expr-descends-for-contrast")
+    ==
+  ::
+    ::  a bare stuck atom is whnf at 0 steps (status is %whnf, never
+    ::  %normal, even though nothing was contracted)
+    =/  r4  (run e0 "%whnf x1")
+    (ck =(out.r4 ["x1  [whnf, 0 steps]"]~) "whnf:bare-atom-zero-steps")
+  ::
+    ::  fuel exhaustion under %whnf: single result line only, no separate
+    ::  "⚠" warning line (matches the Python reference's _finish_reduction,
+    ::  which %whnf alone uses -- unlike a plain expression or %trace)
+    =/  rf1  (run e0 "%fuel 3")
+    =/  rf2  (run session.rf1 "%whnf M M")
+    (ck =(out.rf2 ["M M  [3 steps]"]~) "whnf:fuel-exhaustion-no-warning-line")
+  ==
+::
+::  --- §8+: %size (v1.1, added post-v1 per SPEC.md §6.2/§9) ----------------
+::
+=/  g9
+  ^-  (list tape)
+  %-  zing
+  :~
+    ::  bare %size prints the current value (default 100000, same cap as
+    ::  the old fixed +size-cap)
+    =/  r1  (run e0 "%size")
+    (ck =(out.r1 ["size (max_size) = 100000"]~) "size:bare-prints-default")
+  ::
+    ::  %size N sets it and confirms; then a lowered %size actually bounds
+    ::  reduction -- "Y M" genuinely grows (unlike "M M", which stays
+    ::  constant size) -- exceeding a %size 50 cap partway through,
+    ::  producing the "⚠ term exceeded" warning line (not an error), same
+    ::  shape as a %fuel exhaustion (both checks share r2's session, so
+    ::  they must live in the same list entry -- sibling entries of a `:~`
+    ::  list don't see each other's `=/` bindings)
+    =/  r2  (run e0 "%size 50")
+    =/  r3  (run session.r2 "Y M")
+    =/  has-warn=?
+      &(?=(^ out.r3) (lien `(list tape)`out.r3 |=(t=tape ?=(^ (find "⚠ term exceeded 50 atoms" t)))))
+    %-  zing
+    :~  (ck =(out.r2 ["size (max_size) set to 50"]~) "size:set-confirms")
+        (ck has-warn "size:lowered-cap-triggers-warning")
+    ==
+  ::
+    ::  bad argument errors, same shape as %fuel
+    =/  r4  (run e0 "%size 0")
+    =/  r5  (run e0 "%size nope")
+    %-  zing
+    :~  (ck &(?=(^ out.r4) (is-err -.out.r4)) "size:zero-errors")
+        (ck &(?=(^ out.r5) (is-err -.out.r5)) "size:non-numeric-errors")
+    ==
+  ==
+::
+::  --- §8+: %ascii (v1.1, added post-v1 per SPEC.md §4.3/§9) ---------------
+::
+=/  g10
+  ^-  (list tape)
+  %-  zing
+  :~
+    ::  default (ascii off) renders a bird whose display differs from its
+    ::  canonical name in Unicode subscript form
+    =/  r1  (run e0 "Q1")
+    (ck =(out.r1 ["Q₁  [normal form]"]~) "ascii:default-is-unicode")
+  ::
+    ::  %ascii on confirms, then the same bird renders by its canonical
+    ::  (ASCII) name instead
+    =/  ra  (run e0 "%ascii on")
+    =/  rb  (run session.ra "Q1")
+    %-  zing
+    :~  (ck =(out.ra ["ascii mode on"]~) "ascii:on-confirms")
+        (ck =(out.rb ["Q1  [normal form]"]~) "ascii:on-renders-ascii")
+    ==
+  ::
+    ::  bad argument errors
+    =/  rc  (run e0 "%ascii bogus")
+    (ck &(?=(^ out.rc) (is-err -.out.rc)) "ascii:bad-arg-errors")
+  ==
+::
+;:  weld  g1  g2  g3  g4  g5a  g5b  g6  g7  g8  g9  g10
 ==

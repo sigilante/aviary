@@ -39,8 +39,9 @@
 ::
 +$  def   $%([%alias body=term] [%rule arity=@ud vars=(list @t) rhs=term])
 ::
-::  $env: per-session state -- user definitions plus the session's fuel
-::  (step budget); the size cap is fixed, not session-adjustable
+::  $env: per-session state -- user definitions, the session's fuel (step
+::  budget), size (term-size ceiling, both settable via %fuel/%size), and
+::  the ascii/unicode display-script preference (%ascii on|off)
 ::
-+$  env   [defs=(map @t def) fuel=@ud]
++$  env   [defs=(map @t def) fuel=@ud size=@ud ascii=?]
 --
