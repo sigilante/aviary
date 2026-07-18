@@ -2,7 +2,7 @@
 
 ![](./img/hero.jpeg)
 
-A Jupyter and a Caderno kernel for **combinatory logic** (combinator calculus): S/K/I,
+A Jupyter and a Caderno kernel for combinatory logic (combinator calculus): S/K/I,
 BCKW, and the Smullyan aviary (Bluebird, Cardinal, Mockingbird, Phoenix,
 Psi, Vireo, the once- and twice-removed permuting birds, and more),
 evaluated under normal-order (leftmost-outermost, lazy) reduction to
@@ -10,8 +10,6 @@ full normal form.
 
 ```
 K ▲ (M M)
-```
-```
 ▲        [1 step]
 ```
 
@@ -20,7 +18,9 @@ that's normal order's laziness in action. See `SPEC.md` for the full
 design and `demo.ipynb` for a guided tour, including a computational
 proof-sketch of Smullyan's Mockingbird fondness theorem.
 
-## Install
+## Jupyter/Python Kernel
+
+### Install
 
 Requires Python >= 3.10.
 
@@ -50,13 +50,13 @@ jupyter console --kernel aviary    # or drop into a REPL
 handy for local development without touching your global Jupyter
 config.)
 
-## Usage
+### Usage
 
 A cell is a sequence of lines; each non-empty line is one statement: a
 **magic** (`%name ...`), a **definition** (`Name := expr` or
 `Name v1 v2 -> expr`), or an **expression**. `#` starts a comment.
 
-### Expressions
+#### Expressions
 
 Application is left-associative and implicit -- `S K K` means
 `((S K) K)`. Parentheses group; `S K (K I)` differs from `S (K (K I))`.
@@ -65,8 +65,6 @@ appear free:
 
 ```
 B ▲ 🟢 (K ◆ ●)
-```
-```
 ▲ (🟢 ◆)        [2 steps]
 ```
 
@@ -75,7 +73,7 @@ under Unicode normalization (subscript digits, primes, superscript one)
 and explicit ASCII aliases; `%ascii on`/`off` picks which script output
 uses.
 
-### Definitions
+#### Definitions
 
 ```
 🟢 x y z -> x (z y)      # rule (a new combinator of arity 3)
@@ -89,7 +87,7 @@ explaining why, and suggests routing through `Y`/`Θ` instead). Redefining
 a *built-in* is an error; redefining a *user* definition replaces it.
 `%undef Name` removes a user definition; `%defs` lists them all.
 
-### Magics
+#### Magics
 
 | Magic | Effect |
 |---|---|
@@ -110,13 +108,11 @@ back and can raise the budget with `%fuel`/`%size` and try again:
 
 ```
 M M
-```
-```
 M M      [10000 steps]
 ⚠ no normal form after 10000 steps (fuel exhausted); term size 3
 ```
 
-## Examples
+### Examples
 
 **Bracket abstraction is derived, not hand-copied.** Every non-recursive
 bird's S/K/I form comes from Curry's bracket-abstraction algorithm
@@ -124,8 +120,6 @@ applied to its rule, on demand:
 
 ```
 %ski Q₁
-```
-```
 S (S (K S) (S (K K) (S (K S) K))) (K (S (K (S I)) K))
 ```
 
@@ -134,15 +128,48 @@ arguments once the head sticks:
 
 ```
 %trace Φ B C K x y
-```
-```
     0  Φ B C K x y
 Φ   1  B (C x) (K x) y
 B   2  C x (K x y)
 K   3  C x x
 ```
 
-## Urbit / Caderno
+### Package layout
+
+```
+aviary_kernel/
+  terms.py        Term model (Atom | App), pretty-printer
+  parser.py        lexer + parser -> Term
+  birds.py          the bird registry (verified against two independent sources; see below)
+  reduce.py          normal-order reducer: iterative, fuel/size/interrupt-checked
+  abstraction.py    bracket abstraction -> S/K/I (and S/K)
+  magics.py          %-command dispatch
+  kernel.py          AviaryKernel(ipykernel.kernelbase.Kernel)
+  install.py         `python -m aviary_kernel.install` writes the kernelspec
+  kernelspec/         kernel.json
+tests/               pytest suite (parser, birds, reduce, abstraction, kernel end-to-end)
+demo.ipynb            living documentation / acceptance demo
+SPEC.md               the full design spec
+```
+
+### Development
+
+```sh
+pip install -e '.[test]'
+pytest                       # full suite
+python -m aviary_kernel.install --prefix .venv   # register the kernel into this venv
+```
+
+The bird registry (`birds.py`) was cross-checked row by row against the
+Wolfram Data Repository's *Combinator Birds* dataset (via its own cited
+primary source, Chris Rathman's chart, fetched through the Wayback
+Machine) and combinatorylogic.com's table -- see the header of
+`tests/fixtures_birds.py` for the two source discrepancies that surfaced
+during verification (and how they were resolved) and `tests/test_birds.py`
+for the resulting behavioral-equivalence oracles.
+
+
+## Urbit / Caderno Kernel
 
 Aviary also ships as `desk/`, a self-contained Urbit desk: the `%aviary`
 `/lib/shoe` agent is a sibling Hoon port of this same combinator-calculus
@@ -230,33 +257,6 @@ Then in caderno: create a notebook, choose kernel **"aviary"**. Kernel
 this requirement); the vendored `lib/shoe.hoon` provides it, so no extra
 setup is needed on aviary's side.
 
-### Development loop
-
-```
-|mount %aviary
-:: rsync/copy desk/ into the mounted pier directory, e.g.:
-rsync -a desk/ /path/to/pier/aviary/
-|commit %aviary
-```
-
-Then either talk to it directly from dojo (`|shoe %aviary`-style
-interactive session, once mounted as a running app) or drive it from
-caderno as above.
-
-### Acceptance checklist (manual, on a fakezod)
-
-With both `%aviary` and `%caderno` installed:
-
-- [ ] `%aviary` appears in caderno's kernel discovery list for a notebook.
-- [ ] A notebook with kernel `aviary` runs `K ▲ (M M)` and prints
-      `▲  [1 step]`.
-- [ ] A definition made in one notebook is visible in that notebook's
-      later cells, but **not** in a different notebook (each caderno
-      notebook is a separate `/sole` session, hence a separate env).
-- [ ] `%ski Q1` prints the derived S/K/I form.
-- [ ] A fuel-exhausting cell (e.g. `M M`) shows the `⚠` warning line and
-      the notebook stays responsive to the next cell.
-
 ### Desk layout
 
 ```
@@ -296,43 +296,15 @@ tests/test-engine.sh` directly); `$URBIT_BIN` overrides the `urbit`
 binary used (defaults to `~/bin/urbit`, falling back to `urbit` on
 `PATH`). Run everything, Python and Hoon, with `make test-all`.
 
-## Package layout
+### Development loop
 
 ```
-aviary_kernel/
-  terms.py        Term model (Atom | App), pretty-printer
-  parser.py        lexer + parser -> Term
-  birds.py          the bird registry (verified against two independent sources; see below)
-  reduce.py          normal-order reducer: iterative, fuel/size/interrupt-checked
-  abstraction.py    bracket abstraction -> S/K/I (and S/K)
-  magics.py          %-command dispatch
-  kernel.py          AviaryKernel(ipykernel.kernelbase.Kernel)
-  install.py         `python -m aviary_kernel.install` writes the kernelspec
-  kernelspec/         kernel.json
-tests/               pytest suite (parser, birds, reduce, abstraction, kernel end-to-end)
-demo.ipynb            living documentation / acceptance demo
-SPEC.md               the full design spec
+|mount %aviary
+:: rsync/copy desk/ into the mounted pier directory, e.g.:
+rsync -a desk/ /path/to/pier/aviary/
+|commit %aviary
 ```
 
-## Development
-
-```sh
-pip install -e '.[test]'
-pytest                       # full suite
-python -m aviary_kernel.install --prefix .venv   # register the kernel into this venv
-```
-
-The bird registry (`birds.py`) was cross-checked row by row against the
-Wolfram Data Repository's *Combinator Birds* dataset (via its own cited
-primary source, Chris Rathman's chart, fetched through the Wayback
-Machine) and combinatorylogic.com's table -- see the header of
-`tests/fixtures_birds.py` for the two source discrepancies that surfaced
-during verification (and how they were resolved) and `tests/test_birds.py`
-for the resulting behavioral-equivalence oracles.
-
-## Non-goals (v1)
-
-Graph reduction/sharing (this is tree rewriting -- fine at the term
-sizes a REPL session produces); a `%bckw` target basis; λ-term input;
-`%save`/`%load` of definitions; LaTeX rendering; juxtaposition parsing
-(`SKK` is one atom, not `S K K` -- deliberate, see `SPEC.md` §4.2/§13).
+Then either talk to it directly from dojo (`|shoe %aviary`-style
+interactive session, once mounted as a running app) or drive it from
+caderno as above.

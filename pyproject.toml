@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "aviary-kernel"
 version = "0.1.0"
 description = "A Jupyter kernel for combinatory-logic (combinator calculus) evaluation."
-readme = "README.md"
+readme = "README-Python.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
 authors = [
