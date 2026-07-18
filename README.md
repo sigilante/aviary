@@ -145,9 +145,12 @@ interactively from a terminal `|shoe` session and as a
 `SPEC-DESK.md` for the full desk-level spec.
 
 **Magics:** `%ski`, `%sk`, `%fuel`, `%defs`, `%undef` (SPEC-DESK.md's v1
-scope), plus four originally-deferred-to-v1.1 magics since implemented:
-**`%trace`**, **`%whnf`**, **`%size`**, and **`%ascii`**. `%birds` and
-`%whatis` are not yet built. `%trace`'s output format matches the Python
+scope), plus all six originally-deferred-to-v1.1 magics, now implemented:
+**`%trace`**, **`%whnf`**, **`%size`**, **`%ascii`**, **`%birds`**, and
+**`%whatis`** -- full magic-level parity with the Python kernel (SPEC.md
+§9's protocol-level surface -- tab-completion, `do_inspect`,
+`do_interrupt` -- has no equivalent in the shoe/sole kernel contract this
+desk builds on). `%trace`'s output format matches the Python
 kernel's exactly: each line is the contracted combinator's *canonical* name
 (not its Unicode display form) left-padded to 4 columns, the step number
 right-padded to 4 columns, two spaces, then the term -- e.g. `%trace K x1
@@ -181,7 +184,19 @@ bird names whose canonical name differs from their preferred display
 form -- e.g. `Q1` prints as `Q₁` by default (`%ascii off`) and as `Q1`
 under `%ascii on`.
 
-### Install
+`%birds` (SPEC.md §9) prints the whole registry, one fixed-width row per
+bird, sorted by canonical name -- unlike the Python reference (which also
+emits a `text/markdown` table for rich frontends), this is plain text
+only, since the shoe/sole kernel contract has no rich-display channel;
+it's the same information, just the one rendering the contract can
+actually carry.
+
+`%whatis X` (SPEC.md §9) prints a four-line card for a bird (by
+canonical name or alias) or a user/built-in definition (including `Θ`,
+which is preloaded exactly as if `Θ := U U` had been typed, per
+SPEC.md §5.2): the name(s)/kind/arity header, the rule, the λ-form, and
+the S/K/I expansion (or an `(unexpandable: ...)` fallback for a
+recursive user rule, same wording `%ski` itself would error with).
 
 On a ship with the desk synced to `%aviary`:
 

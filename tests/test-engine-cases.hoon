@@ -46,6 +46,20 @@
   ^-  (list tape)
   ?:  ok  ~
   [label ~]
+::
+::  +find-line-idx: index of the first exact-match line in a (list tape)
+::  -- used by g11's sort-order checks, where the row content itself
+::  (not just presence) is the thing under test.
+::
+++  find-line-idx
+  |=  [l=(list tape) t=tape]
+  ^-  (unit @ud)
+  =/  i=@ud  0
+  |-
+  ^-  (unit @ud)
+  ?~  l  ~
+  ?:  =(i.l t)  `i
+  $(l t.l, i +(i))
 --
 ::
 =/  e0  default-env
@@ -355,5 +369,146 @@
     (ck &(?=(^ out.rc) (is-err -.out.rc)) "ascii:bad-arg-errors")
   ==
 ::
-;:  weld  g1  g2  g3  g4  g5a  g5b  g6  g7  g8  g9  g10
+::  --- §8+: %birds (v1.1, added post-v1 per SPEC.md §9) ---------------------
+::
+=/  g11
+  ^-  (list tape)
+  %-  zing
+  :~
+    ::  50 rows plus the header line, sorted by canonical name (byte/
+    ::  codepoint order -- Unicode names Ê/Φ/Ψ sort after every ASCII
+    ::  one, and "KM" < "KM'" < "Ki" since apostrophe/uppercase-M sort
+    ::  before lowercase i)
+    =/  r  (run e0 "%birds")
+    =/  n  (lent out.r)
+    (ck =(n 51) "birds:total-line-count")
+  ::
+    ::  exact header line
+    =/  rh  (run e0 "%birds")
+    =/  hd  (snag 0 out.rh)
+    (ck =(hd "NAME   BIRD                        AR  RULE") "birds:header-exact")
+  ::
+    ::  an ASCII row, exact match (fixed-width columns, no separators)
+    =/  rq  (run e0 "%birds")
+    =/  has-q1
+      (lien `(list tape)`out.rq |=(l=tape =(l "Q1    Quixotic Bird               3  a (c b)")))
+    (ck has-q1 "birds:ascii-row-exact")
+  ::
+    ::  a Unicode-named row: canonical name is 1 codepoint but 2 UTF-8
+    ::  bytes (Ê), so the NAME column must pad by *codepoint* count (a
+    ::  byte-count pad would come up one column short)
+    =/  re  (run e0 "%birds")
+    =/  has-e
+      (lien `(list tape)`out.re |=(l=tape =(l "Ê     Bald Eagle                  7  a (b c d) (e f g)")))
+    (ck has-e "birds:unicode-row-padded-by-codepoint")
+  ::
+    ::  sort order: KM < KM' < Ki (apostrophe/uppercase sort before
+    ::  lowercase i), and every ASCII name before every Unicode one
+    =/  rs  (run e0 "%birds")
+    =/  km-idx  (need (find-line-idx out.rs "KM    Konstant Mocker             2  b b"))
+    =/  kmq-idx  (need (find-line-idx out.rs "KM'   Crossed Konstant Mocker     2  a a"))
+    =/  ki-idx  (need (find-line-idx out.rs "Ki    Kite                        2  b"))
+    =/  y-idx  (need (find-line-idx out.rs "Y     Sage Bird                   1  a (Y a)"))
+    =/  e-idx  (need (find-line-idx out.rs "Ê     Bald Eagle                  7  a (b c d) (e f g)"))
+    %-  zing
+    :~  (ck &((lth km-idx kmq-idx) (lth kmq-idx ki-idx)) "birds:sort-km-before-ki")
+        (ck (lth y-idx e-idx) "birds:sort-ascii-before-unicode")
+    ==
+  ==
+::
+::  --- §8+: %whatis (v1.1, added post-v1 per SPEC.md §9) --------------------
+::
+=/  g12
+  ^-  (list tape)
+  %-  zing
+  :~
+    ::  a bird with a Unicode display distinct from its canonical name:
+    ::  the name-variants line lists both, sorted ("Q1/Q₁", not "Q₁/Q1")
+    =/  r1  (run e0 "%whatis Q1")
+    =/  expected-q1=(list tape)
+      :~  "Q1/Q₁ -- Quixotic Bird (arity 3)"
+          "  rule:  Q₁ a b c = a (c b)"
+          "  λ:     λa b c. a (c b)"
+          "  S/K/I: S (S (K S) (S (K K) (S (K S) K))) (K (S (K (S I)) K))"
+      ==
+    (ck =(out.r1 expected-q1) "whatis:bird-card-exact")
+  ::
+    ::  looking up by an ASCII alias (E^) finds the same Unicode-canonical
+    ::  bird (Ê) and its card
+    =/  r2  (run e0 "%whatis E^")
+    =/  hd2  (snag 0 out.r2)
+    (ck =(hd2 "E^/Ê -- Bald Eagle (arity 7)") "whatis:alias-lookup-finds-bird")
+  ::
+    ::  Y carries an explicit S/K/I override (its rule alone has no
+    ::  finite bracket-abstraction form) -- the card must show that
+    ::  override, not an "(unexpandable: ...)" fallback
+    =/  r3  (run e0 "%whatis Y")
+    =/  expected-y=(list tape)
+      :~  "Y -- Sage Bird (arity 1)"
+          "  rule:  Y a = a (Y a)"
+          "  λ:     λa. a (Y a)"
+          "  S/K/I: S (K (S I I)) (S (S (K S) K) (K (S I I)))"
+      ==
+    (ck =(out.r3 expected-y) "whatis:y-ski-override")
+  ::
+    ::  Θ is preloaded, not a $bird row -- %whatis must still find it
+    ::  (by either its canonical name or the "Theta" alias) and render
+    ::  it as a *built-in alias* card, matching the Python reference's
+    ::  pre-loaded "Θ := U U" exactly
+    =/  r4  (run e0 "%whatis Theta")
+    =/  r5  (run e0 "%whatis Θ")
+    =/  expected-theta=(list tape)
+      :~  "Θ -- built-in alias (arity 0)"
+          "  rule:  Θ := U U"
+          "  λ:     U U"
+          "  S/K/I: S (K (S I)) (S I I) (S (K (S I)) (S I I))"
+      ==
+    %-  zing
+    :~  (ck =(out.r4 expected-theta) "whatis:theta-via-alias")
+        (ck =(out.r5 expected-theta) "whatis:theta-via-canonical")
+    ==
+  ::
+    ::  a user alias's card: no λ-binder prefix on the λ line (arity 0)
+    =/  ra1  (run e0 "myalias := M")
+    =/  ra2  (run session.ra1 "%whatis myalias")
+    =/  expected-alias=(list tape)
+      :~  "myalias -- user alias (arity 0)"
+          "  rule:  myalias := M"
+          "  λ:     M"
+          "  S/K/I: S I I"
+      ==
+    (ck =(out.ra2 expected-alias) "whatis:user-alias-card")
+  ::
+    ::  a user rule's card
+    =/  rd1  (run e0 "dbl x -> x x")
+    =/  rd2  (run session.rd1 "%whatis dbl")
+    =/  expected-rule=(list tape)
+      :~  "dbl -- user rule (arity 1)"
+          "  rule:  dbl x -> x x"
+          "  λ:     λx. x x"
+          "  S/K/I: S I I"
+      ==
+    (ck =(out.rd2 expected-rule) "whatis:user-rule-card")
+  ::
+    ::  a recursive user rule reduces fine but has no finite S/K/I form --
+    ::  the card shows the same "(unexpandable: ...)" text %ski itself
+    ::  would error with, not a crash
+    =/  rl1  (run e0 "loopy x -> loopy x")
+    =/  rl2  (run session.rl1 "%whatis loopy")
+    =/  ski-line  (snag 3 out.rl2)
+    =/  has-unexpandable  ?=(^ (find "unexpandable" ski-line))
+    (ck &(=((lent out.rl2) 4) has-unexpandable) "whatis:recursive-unexpandable")
+  ::
+    ::  unknown name errors; wrong argument count errors
+    =/  re1  (run e0 "%whatis nonexistent")
+    =/  re2  (run e0 "%whatis")
+    =/  re3  (run e0 "%whatis a b")
+    %-  zing
+    :~  (ck &(?=(^ out.re1) (is-err -.out.re1)) "whatis:unknown-name-errors")
+        (ck &(?=(^ out.re2) (is-err -.out.re2)) "whatis:no-arg-errors")
+        (ck &(?=(^ out.re3) (is-err -.out.re3)) "whatis:multi-arg-errors")
+    ==
+  ==
+::
+;:  weld  g1  g2  g3  g4  g5a  g5b  g6  g7  g8  g9  g10  g11  g12
 ==

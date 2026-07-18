@@ -134,6 +134,82 @@
   %-  malt
   (turn birds |=(b=bird [name.b b]))
 ::
+::  +bird-names: the Smullyan/English name for each bird (aviary_kernel/
+::  birds.py's `bird_name` field), keyed by canonical registry name --
+::  used only by %birds/%whatis (SPEC.md §9), so kept as its own lookup
+::  rather than a fifth $bird field (same reasoning as +y-ski above: the
+::  $bird mold given by SPEC-DESK.md §4 has no room for one). Transcribed
+::  directly from aviary_kernel/birds.py, same row order as ++birds for
+::  easy visual cross-check.
+::
+++  bird-names
+  ^-  (map @t @t)
+  %-  malt
+  :~  ['B' 'Bluebird']
+      ['B1' 'Blackbird']
+      ['B2' 'Bunting']
+      ['B3' 'Becard']
+      ['C' 'Cardinal']
+      ['C*' 'Cardinal Once Removed']
+      ['C**' 'Cardinal Twice Removed']
+      ['D' 'Dove']
+      ['D1' 'Dickcissel']
+      ['D2' 'Dovekie']
+      ['E' 'Eagle']
+      ['Ê' 'Bald Eagle']
+      ['F' 'Finch']
+      ['F*' 'Finch Once Removed']
+      ['F**' 'Finch Twice Removed']
+      ['G' 'Goldfinch']
+      ['H' 'Hummingbird']
+      ['I' 'Identity (Idiot)']
+      ['I*' 'Identity Once Removed']
+      ['I**' 'Identity Twice Removed']
+      ['J' 'Jay']
+      ['K' 'Kestrel']
+      ['Ki' 'Kite']
+      ['KM' 'Konstant Mocker']
+      ['KM\'' 'Crossed Konstant Mocker']
+      ['L' 'Lark']
+      ['M' 'Mockingbird']
+      ['M2' 'Double Mockingbird']
+      ['O' 'Owl']
+      ['Φ' 'Phoenix']
+      ['Ψ' 'Psi Bird']
+      ['Q' 'Queer Bird']
+      ['Q1' 'Quixotic Bird']
+      ['Q2' 'Quizzical Bird']
+      ['Q3' 'Quirky Bird']
+      ['Q4' 'Quacky Bird']
+      ['R' 'Robin']
+      ['R*' 'Robin Once Removed']
+      ['R**' 'Robin Twice Removed']
+      ['S' 'Starling']
+      ['T' 'Thrush']
+      ['U' 'Turing Bird']
+      ['V' 'Vireo']
+      ['V*' 'Vireo Once Removed']
+      ['V**' 'Vireo Twice Removed']
+      ['W' 'Warbler']
+      ['W*' 'Warbler Once Removed']
+      ['W**' 'Warbler Twice Removed']
+      ['W\'' 'Converse Warbler']
+      ['Y' 'Sage Bird']
+  ==
+::
+::  +aliases-for: alias keys (E^, Phi, Psi, ...) whose target is the given
+::  canonical name -- the inverse of ++aliases, used by %whatis's card to
+::  show every name a bird answers to (SPEC.md §9's card format).
+::
+++  aliases-for
+  |=  rname=@t
+  ^-  (list @t)
+  %+  murn  ~(tap by aliases)
+  |=  [k=@t v=@t]
+  ^-  (unit @t)
+  ?:  =(v rname)  `k
+  ~
+::
 ::  --- internal types ---------------------------------------------------
 ::
 +$  tok    $%([%lpar ~] [%rpar ~] [%bind ~] [%arrow ~] [%atom p=@t])
@@ -570,7 +646,11 @@
   =/  rname  (resolve-name name)
   ?:  (lien in-progress |=(x=@t =(x rname)))
     :-  %|
-    (weld "cannot expand recursive combinator '" (weld (trip rname) "' to a finite S/K/I term"))
+    ;:  weld
+      "cannot expand recursive combinator '"  (trip rname)
+      "' to a finite S/K/I term; define it via a fixed-point combinator (e.g. "
+      (trip rname)  " := Y step) instead"
+    ==
   =/  nip  [rname in-progress]
   ?^  ski.u.c
     (expand-raw session u.ski.u.c nip)
@@ -603,22 +683,45 @@
   ?:  =(n 0)  out
   $(n (div n 10), out [(add '0' (mod n 10)) out])
 ::
-::  +pad-right-min4/+pad-left-min4: Python's f"{x:<4}"/f"{x:>4}" -- pad with
-::  spaces to width 4 if shorter; a longer tape (e.g. a >4-char user rule
-::  name in a %trace label) passes through untouched, same as Python's
-::  format-spec (which never truncates).
+::  +pad-right/+pad-left: Python's f"{x:<w}"/f"{x:>w}" -- pad with spaces
+::  to width w if shorter; a longer tape passes through untouched, same
+::  as Python's format-spec (which never truncates).
+::
+::  width here is *codepoints*, not bytes -- a UTF-8 tape's +lent counts
+::  raw bytes, so a 2-byte-encoded name like Ê/Φ/Ψ would otherwise come
+::  up one column short versus Python's f"{x:<w}" (which counts str
+::  codepoints, i.e. len("Ê") == 1). +tuba (already used for input
+::  decoding elsewhere in this file) recovers the codepoint count from
+::  the byte tape; the padding characters added are plain ASCII spaces
+::  either way, so the result is still a valid byte tape.
+::
+++  pad-right
+  |=  [t=tape w=@ud]
+  ^-  tape
+  =/  n  (lent (tuba t))
+  ?:  (gte n w)  t
+  (weld t (reap (sub w n) ' '))
+::
+++  pad-left
+  |=  [t=tape w=@ud]
+  ^-  tape
+  =/  n  (lent (tuba t))
+  ?:  (gte n w)  t
+  (weld (reap (sub w n) ' ') t)
+::
+::  +pad-right-min4/+pad-left-min4: the width-4 case, used by %trace's
+::  line format (a >4-char user rule name in the label passes through
+::  untouched, same as +pad-right/+pad-left generally).
 ::
 ++  pad-right-min4
   |=  t=tape
   ^-  tape
-  ?:  (gte (lent t) 4)  t
-  (weld t (reap (sub 4 (lent t)) ' '))
+  (pad-right t 4)
 ::
 ++  pad-left-min4
   |=  t=tape
   ^-  tape
-  ?:  (gte (lent t) 4)  t
-  (weld (reap (sub 4 (lent t)) ' ') t)
+  (pad-left t 4)
 ::
 ::  +render-trace-line: one %trace line (SPEC.md §6.3), e.g. "    0  K x
 ::  (M x)" (no label) or "K      1  x" (label "K", left-padded step "1").
@@ -733,6 +836,16 @@
   ?~  t.l  (trip i.l)
   (weld (trip i.l) (weld " " (join-sp t.l)))
 ::
+::  +join-slash: same idea as +join-sp, for %whatis's "Q1/Q₁"-style name
+::  list (SPEC.md §9's card format).
+::
+++  join-slash
+  |=  l=(list @t)
+  ^-  tape
+  ?~  l  ""
+  ?~  t.l  (trip i.l)
+  (weld (trip i.l) (weld "/" (join-slash t.l)))
+::
 ++  tape-lth
   |=  [a=tape b=tape]
   ^-  ?
@@ -740,6 +853,23 @@
   ?~  b  %.n
   ?:  =(i.a i.b)  $(a t.a, b t.b)
   (lth i.a i.b)
+::
+::  +name-lth: byte-order comparison of two @t names -- UTF-8's design
+::  guarantees that raw-byte lexicographic order (what +trip/+tape-lth
+::  give) matches codepoint order, so this reproduces Python's plain
+::  string sort (`sorted(..., key=lambda b: b.name)`, SPEC.md §9)
+::  exactly, including Unicode names (Ê/Φ/Ψ) sorting after every ASCII
+::  one.
+::
+++  name-lth
+  |=  [a=@t b=@t]
+  ^-  ?
+  (tape-lth (trip a) (trip b))
+::
+++  bird-lth
+  |=  [a=bird b=bird]
+  ^-  ?
+  (name-lth name.a name.b)
 ::
 ++  is-builtin-name
   |=  name=@t
@@ -890,6 +1020,140 @@
     [%& ["ascii mode off"]~ session(ascii %.n)]
   [%| "%ascii expects 'on' or 'off'"]
 ::
+::  --- %birds / %whatis cards (SPEC.md §9) --------------------------------
+::
+::  +ski-line-for: the "S/K/I:" line shared by a bird's card and a user
+::  definition's card -- expand the name to S/K/I, or show the same
+::  "(unexpandable: ...)" fallback text %ski/%sk itself would error with
+::  (a recursive user rule can reduce fine but has no finite S/K/I form).
+::
+++  ski-line-for
+  |=  [session=env name=@t ascii=?]
+  ^-  tape
+  =/  ex  (expand session name ~ %.n)
+  ?:  ?=(%| -.ex)  (weld "(unexpandable: " (weld p.ex ")"))
+  (pretty p.ex ascii)
+::
+::  +bird-name-variants: "Q1/Q₁"-style union of a bird's canonical name,
+::  its preferred display form, and any alias keys that resolve to it --
+::  deduped and sorted the same way as Python's
+::  `"/".join(sorted({b.name, b.display, *b.aliases}))`.
+::
+++  bird-name-variants
+  |=  b=bird
+  ^-  tape
+  =/  raw=(list @t)  [name.b disp.b (aliases-for name.b)]
+  =/  deduped  ~(tap in (~(gas in *(set @t)) raw))
+  (join-slash (sort deduped name-lth))
+::
+::  +card-for-bird: a bird's %whatis card -- name variants, English name,
+::  arity; then rule/λ/S-K-I lines, in that order (SPEC.md §9's
+::  `card_for_bird`).
+::
+++  card-for-bird
+  |=  [session=env b=bird ascii=?]
+  ^-  (list tape)
+  =/  formals  (formals-for arity.b)
+  =/  rule-term  (parse-rule-text rule.b)
+  =/  full-name  (~(got by bird-names) name.b)
+  =/  lam
+    (weld "λ" (weld (join-sp formals) (weld ". " (pretty rule-term ascii))))
+  =/  rule-line
+    ;:  weld
+      (trip (disp-name name.b ascii))  " "  (join-sp formals)
+      " = "  (pretty rule-term ascii)
+    ==
+  :~  ;:  weld
+        (bird-name-variants b)  " -- "  (trip full-name)
+        " (arity "  (render-ud arity.b)  ")"
+      ==
+      (weld "  rule:  " rule-line)
+      (weld "  λ:     " lam)
+      (weld "  S/K/I: " (ski-line-for session name.b ascii))
+  ==
+::
+::  +card-for-def: a user definition's (or Θ's) %whatis card -- same
+::  shape as +card-for-bird but for a $def (SPEC.md §9's
+::  `card_for_definition`). Θ is passed in with builtin=%.y and is-alias
+::  =%.y, matching the Python reference's pre-loaded `Θ := U U` built-in
+::  alias exactly, even though our own env doesn't store Θ in defs.session
+::  (SPEC-DESK.md's "never stored in env's user defs map" design).
+::
+++  card-for-def
+  |=  [session=env name=@t is-alias=? formals=(list @t) body=term builtin=? ascii=?]
+  ^-  (list tape)
+  =/  kind=tape
+    ?:  builtin  "built-in alias"
+    ?:  is-alias  "user alias"
+    "user rule"
+  =/  rule-line
+    ?:  is-alias
+      (weld (trip name) (weld " := " (pretty body ascii)))
+    ;:  weld
+      (trip name)  " "  (join-sp formals)  " -> "  (pretty body ascii)
+    ==
+  =/  lam
+    ?:  is-alias  (pretty body ascii)
+    (weld "λ" (weld (join-sp formals) (weld ". " (pretty body ascii))))
+  :~  ;:  weld
+        (trip name)  " -- "  kind
+        " (arity "  (render-ud (lent formals))  ")"
+      ==
+      (weld "  rule:  " rule-line)
+      (weld "  λ:     " lam)
+      (weld "  S/K/I: " (ski-line-for session name ascii))
+  ==
+::
+::  +magic-birds: %birds (SPEC.md §9) -- the whole registry, one row per
+::  bird, sorted by canonical name. Caderno/shoe's %txt-per-line contract
+::  has no `text/markdown` display_data channel, so unlike the Python
+::  reference (which also emits a Markdown table for rich frontends) this
+::  is plain text only -- the same information, just the one rendering
+::  the kernel contract can actually carry.
+::
+++  magic-birds
+  |=  [session=env rest=(list tok)]
+  ^-  (each [out=(list tape) session=env] tape)
+  =/  rows  (sort birds bird-lth)
+  =/  render-row
+    |=  b=bird
+    ^-  tape
+    ;:  weld
+      (pad-right (trip name.b) 6)
+      (pad-right (trip (~(got by bird-names) name.b)) 28)
+      (pad-right (render-ud arity.b) 3)
+      (pretty (parse-rule-text rule.b) ascii.session)
+    ==
+  =/  header  "NAME   BIRD                        AR  RULE"
+  [%& [header (turn rows render-row)] session]
+::
+::  +magic-whatis: %whatis X (SPEC.md §9) -- one card, for a bird (by
+::  canonical name or alias) or a user/built-in definition (Θ included).
+::
+++  magic-whatis
+  |=  [session=env rest=(list tok)]
+  ^-  (each [out=(list tape) session=env] tape)
+  ?.  =((lent rest) 1)
+    [%| "%whatis expects a single name argument"]
+  =/  nm  (tok-atom-name (snag 0 rest))
+  ?~  nm  [%| "%whatis expects a single name argument"]
+  =/  name  u.nm
+  =/  rname  (resolve-name name)
+  =/  b  (~(get by birds-map) rname)
+  ?^  b  [%& (card-for-bird session u.b ascii.session) session]
+  ?:  =(rname 'Θ')
+    =/  theta-body=term  [%app 'U' 'U']
+    [%& (card-for-def session rname %.y ~ theta-body %.y ascii.session) session]
+  =/  d  (~(get by defs.session) rname)
+  ?^  d
+    ?-  -.u.d
+      %alias
+        [%& (card-for-def session rname %.y ~ body.u.d %.n ascii.session) session]
+      %rule
+        [%& (card-for-def session rname %.n vars.u.d rhs.u.d %.n ascii.session) session]
+    ==
+  [%| (weld "unknown name '" (weld (trip name) "'"))]
+::
 ++  render-def
   |=  [p=@t q=def ascii=?]
   ^-  tape
@@ -937,12 +1201,15 @@
   ?:  =(name '%fuel')   (magic-fuel session rest)
   ?:  =(name '%size')   (magic-size session rest)
   ?:  =(name '%ascii')  (magic-ascii session rest)
+  ?:  =(name '%birds')  (magic-birds session rest)
+  ?:  =(name '%whatis')  (magic-whatis session rest)
   ?:  =(name '%defs')   (magic-defs session rest)
   ?:  =(name '%undef')  (magic-undef session rest)
   :-  %|
   %+  weld  "unknown magic '"
   %+  weld  (trip name)
-  "'; available: %ski, %sk, %trace, %whnf, %fuel, %size, %ascii, %defs, %undef"
+  %+  weld  "'; available: %ski, %sk, %trace, %whnf, %fuel, %size, %ascii, "
+  "%birds, %whatis, %defs, %undef"
 ::
 ::  --- statement handlers --------------------------------------------------
 ::
