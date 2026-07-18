@@ -2,7 +2,7 @@
 
 ![](./img/hero.jpeg)
 
-A Jupyter kernel for **combinatory logic** (combinator calculus): S/K/I,
+A Jupyter and a Caderno kernel for **combinatory logic** (combinator calculus): S/K/I,
 BCKW, and the Smullyan aviary (Bluebird, Cardinal, Mockingbird, Phoenix,
 Psi, Vireo, the once- and twice-removed permuting birds, and more),
 evaluated under normal-order (leftmost-outermost, lazy) reduction to
@@ -144,6 +144,24 @@ interactively from a terminal `|shoe` session and as a
 [caderno](https://github.com/sigilante/caderno) kernel. See
 `SPEC-DESK.md` for the full desk-level spec.
 
+**Magics:** `%ski`, `%sk`, `%fuel`, `%defs`, `%undef` (SPEC-DESK.md's v1
+scope), plus **`%trace`** (SPEC.md §6.3/§9's step-by-step reduction trace --
+originally deferred to v1.1 by SPEC-DESK.md §1, since implemented). The
+other deferred magics (`%whnf`, `%birds`, `%whatis`, `%ascii`) are not yet
+built. `%trace`'s output format matches the Python kernel's exactly: each
+line is the contracted combinator's *canonical* name (not its Unicode
+display form) left-padded to 4 columns, the step number right-padded to 4
+columns, two spaces, then the term -- e.g. `%trace K x1 (M x1)` prints
+
+```
+       0  K x1 (M x1)
+K      1  x1
+```
+
+Traces obey the session's fuel the same as a plain expression (a
+fuel/size warning line, never an error) and elide the middle beyond 200
+lines when running under the default (unraised) fuel.
+
 ### Install
 
 On a ship with the desk synced to `%aviary`:
@@ -198,10 +216,18 @@ desk/
   lib/shoe.hoon              VENDORED from north master (%eval-command + the
                              /x/sole/sessions scry live here)
   lib/sole.hoon, lib/default-agent.hoon, lib/dbug.hoon, lib/skeleton.hoon,
-  lib/test.hoon, sur/sole.hoon, mar/eval-command.hoon
+  lib/test.hoon, sur/sole.hoon, mar/eval-command.hoon,
+  mar/bill.hoon, mar/sole/action.hoon, mar/sole/effect.hoon,
+  lib/language-server-complete.hoon, lib/language-server-parser.hoon
                              VENDORED, byte-for-byte, from north master /
                              base master (see SPEC-DESK.md §1-2 for exactly
-                             which and why)
+                             which and why; the last five surfaced only when
+                             actually installing on a live ship -- desk.bill
+                             needs mar/bill.hoon to validate, Eyre needs
+                             mar/sole/{action,effect}.hoon to JSON-serialize
+                             sole-effect facts for any HTTP/channel client,
+                             and lib/shoe.hoon's tab-completion needs the
+                             two flat-named language-server-*.hoon files)
 tests/
   test-engine.sh             headless engine tests via `urbit eval` (SPEC-
                              DESK.md §8); needs $URBIT_BIN or ~/bin/urbit
