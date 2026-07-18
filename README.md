@@ -25,9 +25,16 @@ proof-sketch of Smullyan's Mockingbird fondness theorem.
 Requires Python >= 3.10.
 
 ```sh
+pip install aviary-kernel
+python -m aviary_kernel.install --user   # or --prefix /path/to/env
+```
+
+Or from a checkout, for development:
+
+```sh
 python3 -m venv .venv && source .venv/bin/activate
 pip install -e .
-python -m aviary_kernel.install --user   # or --prefix /path/to/env
+python -m aviary_kernel.install --prefix .venv
 ```
 
 This registers a kernelspec named `aviary`, displayed as
@@ -209,11 +216,14 @@ any real sole session (terminal `|shoe`, or `|dojo/link`ed to one).
 Whether a *caderno notebook cell* ever exercises this is a separate,
 Caderno-side question -- see [caderno#16](https://github.com/sigilante/caderno/issues/16).
 
-On a ship with the desk synced to `%aviary`:
+The desk is distributed from `~magbel`. On any ship:
 
 ```
-|install our %aviary
+|install ~magbel %aviary
 ```
+
+(To run it from a local checkout instead — for development, or to
+install from your own ship — see the development loop below.)
 
 Then in caderno: create a notebook, choose kernel **"aviary"**. Kernel
 *discovery* needs the `/x/sole/sessions` scry (caderno's README notes

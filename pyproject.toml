@@ -9,10 +9,39 @@ description = "A Jupyter kernel for combinatory-logic (combinator calculus) eval
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
+authors = [
+    { name = "Sigilante", email = "davisneale@gmail.com" },
+]
+keywords = [
+    "combinatory-logic",
+    "combinator-calculus",
+    "ski",
+    "lambda-calculus",
+    "jupyter",
+    "jupyter-kernel",
+    "smullyan",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Framework :: Jupyter",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Education",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Mathematics",
+]
 dependencies = [
     "ipykernel>=6.0",
     "jupyter_client>=7.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/sigilante/aviary"
+Repository = "https://github.com/sigilante/aviary"
+Issues = "https://github.com/sigilante/aviary/issues"
 
 [project.optional-dependencies]
 test = ["pytest>=7.0"]
