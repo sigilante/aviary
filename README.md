@@ -1,5 +1,7 @@
 # Aviary
 
+![](./img/hero.jpeg)
+
 A Jupyter kernel for **combinatory logic** (combinator calculus): S/K/I,
 BCKW, and the Smullyan aviary (Bluebird, Cardinal, Mockingbird, Phoenix,
 Psi, Vireo, the once- and twice-removed permuting birds, and more),
@@ -132,6 +134,86 @@ arguments once the head sticks:
 B   2  C x (K x y)
 K   3  C x x
 ```
+
+## Urbit / Caderno
+
+Aviary also ships as `desk/`, a self-contained Urbit desk: the `%aviary`
+`/lib/shoe` agent is a sibling Hoon port of this same combinator-calculus
+engine (same language, same semantics -- SPEC.md §§3-8), usable both
+interactively from a terminal `|shoe` session and as a
+[caderno](https://github.com/sigilante/caderno) kernel. See
+`SPEC-DESK.md` for the full desk-level spec.
+
+### Install
+
+On a ship with the desk synced to `%aviary`:
+
+```
+|install our %aviary
+```
+
+Then in caderno: create a notebook, choose kernel **"aviary"**. Kernel
+*discovery* needs the `/x/sole/sessions` scry (caderno's README notes
+this requirement); the vendored `lib/shoe.hoon` provides it, so no extra
+setup is needed on aviary's side.
+
+### Development loop
+
+```
+|mount %aviary
+:: rsync/copy desk/ into the mounted pier directory, e.g.:
+rsync -a desk/ /path/to/pier/aviary/
+|commit %aviary
+```
+
+Then either talk to it directly from dojo (`|shoe %aviary`-style
+interactive session, once mounted as a running app) or drive it from
+caderno as above.
+
+### Acceptance checklist (manual, on a fakezod)
+
+With both `%aviary` and `%caderno` installed:
+
+- [ ] `%aviary` appears in caderno's kernel discovery list for a notebook.
+- [ ] A notebook with kernel `aviary` runs `K ▲ (M M)` and prints
+      `▲  [1 step]`.
+- [ ] A definition made in one notebook is visible in that notebook's
+      later cells, but **not** in a different notebook (each caderno
+      notebook is a separate `/sole` session, hence a separate env).
+- [ ] `%ski Q1` prints the derived S/K/I form.
+- [ ] A fuel-exhausting cell (e.g. `M M`) shows the `⚠` warning line and
+      the notebook stays responsive to the next cell.
+
+### Desk layout
+
+```
+desk/
+  sys.kelvin              [%zuse 408]
+  desk.bill                :~  %aviary  ==
+  app/aviary.hoon           shoe agent (thin transport shim over lib/aviary)
+  lib/aviary.hoon            the pure engine: lexer, parser, registry, reducer,
+                             bracket abstraction, magics, pretty-printer
+  sur/aviary.hoon            term/bird/def/env types
+  tests/lib/aviary.hoon      -test-thread-style regression tests
+  lib/shoe.hoon              VENDORED from north master (%eval-command + the
+                             /x/sole/sessions scry live here)
+  lib/sole.hoon, lib/default-agent.hoon, lib/dbug.hoon, lib/skeleton.hoon,
+  lib/test.hoon, sur/sole.hoon, mar/eval-command.hoon
+                             VENDORED, byte-for-byte, from north master /
+                             base master (see SPEC-DESK.md §1-2 for exactly
+                             which and why)
+tests/
+  test-engine.sh             headless engine tests via `urbit eval` (SPEC-
+                             DESK.md §8); needs $URBIT_BIN or ~/bin/urbit
+  test-engine-cases.hoon     the actual §8 test battery (one Hoon expression)
+tests/test_hoon_registry.py  Python <-> Hoon registry cross-test (SPEC-
+                             DESK.md §7): fails hard on any drift
+```
+
+Run the Hoon engine tests with `make test-hoon` (or `bash
+tests/test-engine.sh` directly); `$URBIT_BIN` overrides the `urbit`
+binary used (defaults to `~/bin/urbit`, falling back to `urbit` on
+`PATH`). Run everything, Python and Hoon, with `make test-all`.
 
 ## Package layout
 
