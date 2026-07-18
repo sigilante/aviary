@@ -148,9 +148,10 @@ interactively from a terminal `|shoe` session and as a
 scope), plus all six originally-deferred-to-v1.1 magics, now implemented:
 **`%trace`**, **`%whnf`**, **`%size`**, **`%ascii`**, **`%birds`**, and
 **`%whatis`** -- full magic-level parity with the Python kernel (SPEC.md
-§9's protocol-level surface -- tab-completion, `do_inspect`,
-`do_interrupt` -- has no equivalent in the shoe/sole kernel contract this
-desk builds on). `%trace`'s output format matches the Python
+§9's protocol-level surface -- `do_inspect`/`do_interrupt` have no
+equivalent in the shoe/sole kernel contract this desk builds on, since
+Gall pokes are synchronous and `%whatis` already covers `do_inspect`'s
+job). `%trace`'s output format matches the Python
 kernel's exactly: each line is the contracted combinator's *canonical* name
 (not its Unicode display form) left-padded to 4 columns, the step number
 right-padded to 4 columns, two spaces, then the term -- e.g. `%trace K x1
@@ -197,6 +198,16 @@ which is preloaded exactly as if `Θ := U U` had been typed, per
 SPEC.md §5.2): the name(s)/kind/arity header, the rule, the λ-form, and
 the S/K/I expansion (or an `(unexpandable: ...)` fallback for a
 recursive user rule, same wording `%ski` itself would error with).
+
+**Tab completion:** `app/aviary.hoon` implements `+tab-list` for real
+(every bird name and alias, every magic name, and the session's own
+user definitions, each with a one-line detail) -- this is Aviary's half
+of SPEC-DESK.md §1/§10's deferred "completion/tab-list beyond shoe's
+default," reusing the vendored `lib/language-server-complete.hoon`
+prefix-matching machinery `/lib/shoe`'s own `+tab` arm already calls for
+any real sole session (terminal `|shoe`, or `|dojo/link`ed to one).
+Whether a *caderno notebook cell* ever exercises this is a separate,
+Caderno-side question -- see [caderno#16](https://github.com/sigilante/caderno/issues/16).
 
 On a ship with the desk synced to `%aviary`:
 

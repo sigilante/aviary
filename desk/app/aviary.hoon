@@ -6,6 +6,7 @@
 ::
 /+  default-agent, shoe, dbug
 /+  *aviary
+/+  auto=language-server-complete
 ::
 |%
 +$  versioned-state  $%  [%0 state-0]  ==
@@ -33,6 +34,95 @@
   ?:  =(i.t `@`10)
     $(t t.t, cur ~, acc `(list tape)`[(flop cur) acc])
   $(t t.t, cur `tape`[i.t cur])
+::
+::  --- +tab-list candidates -----------------------------------------------
+::
+::    Aviary's half of "completion/tab-list beyond shoe's default"
+::    (SPEC-DESK.md §1/§10's deferred item): supplying the actual
+::    candidates (bird names + aliases, magic names, the session's own
+::    user definitions) is squarely Aviary's job -- only Aviary knows
+::    this vocabulary. The generic prefix-filtering/longest-match
+::    machinery that turns this list into a live Tab keystroke's effect
+::    is already vendored (lib/language-server-complete.hoon, called
+::    "auto" here, matching lib/shoe.hoon's own internal alias) and
+::    wired up by /lib/shoe's `+tab` arm for any real sole session.
+::
+::    Whether a *caderno notebook cell* ever exercises this is a
+::    separate, Caderno-side question -- see the sigilante/caderno issue
+::    filed alongside this change. This code path is exactly as useful
+::    interactively (dojo, or any other real sole session) regardless
+::    of that.
+::
+::  +magic-help: one-line description per magic name, shown as each
+::  candidate's detail tank.
+::
+++  magic-help
+  ^-  (map @t tape)
+  %-  malt
+  :~  ['%ski' "basis-expand to S/K/I, no reduction"]
+      ['%sk' "basis-expand to strict S/K, no reduction"]
+      ['%trace' "step-by-step reduction trace"]
+      ['%whnf' "reduce to weak head normal form only"]
+      ['%fuel' "get/set the session's step budget"]
+      ['%size' "get/set the session's term-size ceiling"]
+      ['%ascii' "toggle ASCII vs Unicode display"]
+      ['%birds' "list the whole bird registry"]
+      ['%whatis' "one bird/definition's card"]
+      ['%defs' "list user definitions"]
+      ['%undef' "remove a user definition"]
+  ==
+::
+::  +bird-candidates: every bird's canonical name plus every alias key
+::  (E^, Phi, Psi -- Theta is handled separately below, since Θ is not a
+::  $bird row), each with a short detail tank.
+::
+++  bird-candidates
+  ^-  (list (option:auto tank))
+  %-  zing
+  %+  turn  birds
+  |=  b=bird
+  ^-  (list (option:auto tank))
+  =/  detail=tank
+    :-  %leaf
+    %+  weld  (trip (~(got by bird-names) name.b))
+    (weld " (arity " (weld (render-ud arity.b) ")"))
+  :-  [name.b detail]
+  %+  turn  (aliases-for name.b)
+  |=  a=@t
+  ^-  (option:auto tank)
+  [a leaf+(weld "alias for " (trip name.b))]
+::
+::  +magic-candidates: every magic name, detail from +magic-help.
+::
+++  magic-candidates
+  ^-  (list (option:auto tank))
+  %+  turn  ~(tap by magic-help)
+  |=  [k=@t v=tape]
+  ^-  (option:auto tank)
+  [k leaf+v]
+::
+::  +def-candidates: the session's own user definitions, detail
+::  rendered the same way %defs itself would show them.
+::
+++  def-candidates
+  |=  session=env
+  ^-  (list (option:auto tank))
+  %+  turn  ~(tap by defs.session)
+  |=  [p=@t q=def]
+  ^-  (option:auto tank)
+  [p leaf+(render-def p q %.n)]
+::
+++  tab-candidates
+  |=  session=env
+  ^-  (list (option:auto tank))
+  ;:  weld
+    bird-candidates
+    :~  ['Θ' leaf+"built-in alias := U U"]
+        ['Theta' leaf+"alias for Θ"]
+    ==
+    magic-candidates
+    (def-candidates session)
+  ==
 --
 ::
 =|  state-0
@@ -76,7 +166,10 @@
   ^+  |~(nail *(like [? command]))
   (stag | (star next))
 ::
-++  tab-list  tab-list:des
+++  tab-list
+  |=  =sole-id:shoe
+  ^-  (list (option:auto tank))
+  (tab-candidates (~(gut by sessions) sole-id default-env))
 ::
 ++  can-connect
   |=  =sole-id:shoe
