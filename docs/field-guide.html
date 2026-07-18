@@ -1,0 +1,982 @@
+<title>The Aviary &mdash; a Field Guide to the Combinator Birds</title>
+<style>
+  :root {
+    --paper: #eae3d1;
+    --paper-raised: #f3eee0;
+    --ink: #262115;
+    --ink-soft: #6b6248;
+    --ink-faint: #9a8f6e;
+    --line: #c3b78f;
+    --line-soft: #d9d0b5;
+    --accent: #8a3a26;
+    --accent-soft: #a85f45;
+    --moss: #556141;
+    --moss-soft: #eef0e4;
+    --shadow: 0 1px 0 rgba(38, 33, 21, 0.06);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: #18160f;
+      --paper-raised: #201d13;
+      --ink: #ece3ca;
+      --ink-soft: #b3a887;
+      --ink-faint: #766c50;
+      --line: #45402a;
+      --line-soft: #322e1d;
+      --accent: #dd8a6a;
+      --accent-soft: #b8694b;
+      --moss: #9db07c;
+      --moss-soft: #262b1c;
+      --shadow: 0 1px 0 rgba(0, 0, 0, 0.4);
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #18160f;
+    --paper-raised: #201d13;
+    --ink: #ece3ca;
+    --ink-soft: #b3a887;
+    --ink-faint: #766c50;
+    --line: #45402a;
+    --line-soft: #322e1d;
+    --accent: #dd8a6a;
+    --accent-soft: #b8694b;
+    --moss: #9db07c;
+    --moss-soft: #262b1c;
+    --shadow: 0 1px 0 rgba(0, 0, 0, 0.4);
+  }
+  :root[data-theme="light"] {
+    --paper: #eae3d1;
+    --paper-raised: #f3eee0;
+    --ink: #262115;
+    --ink-soft: #6b6248;
+    --ink-faint: #9a8f6e;
+    --line: #c3b78f;
+    --line-soft: #d9d0b5;
+    --accent: #8a3a26;
+    --accent-soft: #a85f45;
+    --moss: #556141;
+    --moss-soft: #eef0e4;
+    --shadow: 0 1px 0 rgba(38, 33, 21, 0.06);
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--paper);
+    color: var(--ink);
+    overflow-x: hidden;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  a { color: var(--accent); }
+  a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .sheet {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 0 clamp(16px, 4vw, 40px) 64px;
+  }
+
+  /* ---------- masthead ---------- */
+
+  .masthead {
+    padding: clamp(28px, 6vw, 56px) 0 28px;
+    text-align: center;
+  }
+
+  .eyebrow {
+    font-size: 0.7rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--moss);
+    font-weight: 600;
+  }
+
+  .title {
+    font-family: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+    font-style: italic;
+    font-weight: 500;
+    font-size: clamp(2.6rem, 7vw, 4.6rem);
+    margin: 0.2em 0 0.12em;
+    color: var(--ink);
+    text-wrap: balance;
+    letter-spacing: -0.01em;
+  }
+
+  .subtitle {
+    font-size: clamp(0.95rem, 1.6vw, 1.1rem);
+    color: var(--ink-soft);
+    max-width: 46ch;
+    margin: 0 auto;
+    line-height: 1.5;
+    text-wrap: balance;
+  }
+
+  .subtitle code {
+    font-family: ui-monospace, "SF Mono", "Cascadia Code", Consolas, Menlo, monospace;
+    background: var(--moss-soft);
+    color: var(--moss);
+    padding: 0.05em 0.4em;
+    border-radius: 3px;
+    font-size: 0.85em;
+  }
+
+  .frame-rule {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 22px auto 0;
+    max-width: 420px;
+  }
+  .frame-rule::before, .frame-rule::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--line);
+  }
+  .frame-rule span {
+    color: var(--ink-faint);
+    font-size: 1rem;
+  }
+
+  /* ---------- toolbar ---------- */
+
+  .toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 18px;
+    align-items: center;
+    justify-content: center;
+    padding: 20px 0 8px;
+    font-size: 0.82rem;
+    color: var(--ink-soft);
+  }
+
+  .toolbar input[type="search"] {
+    font: inherit;
+    font-size: 0.85rem;
+    background: var(--paper-raised);
+    border: 1px solid var(--line);
+    color: var(--ink);
+    border-radius: 5px;
+    padding: 7px 12px;
+    width: 220px;
+    max-width: 60vw;
+  }
+  .toolbar input[type="search"]::placeholder { color: var(--ink-faint); }
+  .toolbar input[type="search"]:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+  .toolbar .count {
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-faint);
+  }
+  .toolbar .count strong { color: var(--moss); font-weight: 700; }
+
+  /* ---------- grid ---------- */
+
+  .grid {
+    margin-top: 18px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(252px, 1fr));
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+    align-items: start;
+  }
+
+  .card {
+    background: var(--paper-raised);
+    padding: 16px 18px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .plate {
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    color: var(--ink-faint);
+  }
+  .plate::before { content: "PLATE "; }
+
+  .arity {
+    font-size: 0.68rem;
+    letter-spacing: 0.05em;
+    color: var(--moss);
+    background: var(--moss-soft);
+    border-radius: 999px;
+    padding: 2px 9px;
+  }
+
+  .symbol {
+    font-family: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+    font-size: 2.3rem;
+    line-height: 1;
+    color: var(--accent);
+    font-weight: 500;
+  }
+
+  .bird-name {
+    margin: -2px 0 0;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+
+  .bird-name .alias {
+    display: block;
+    text-transform: none;
+    font-weight: 400;
+    letter-spacing: 0;
+    color: var(--ink-faint);
+    font-style: italic;
+    margin-top: 2px;
+  }
+
+  .rule, .ski-code {
+    font-family: ui-monospace, "SF Mono", "Cascadia Code", Consolas, Menlo, monospace;
+  }
+
+  .rule {
+    font-size: 0.86rem;
+    color: var(--ink);
+    background: transparent;
+    padding: 0;
+    overflow-wrap: break-word;
+  }
+
+  .lam {
+    margin: 0;
+    font-size: 0.78rem;
+    font-style: italic;
+    color: var(--ink-soft);
+  }
+
+  .ski {
+    margin-top: 4px;
+    padding-top: 10px;
+    border-top: 1px solid var(--line-soft);
+  }
+
+  .ski-tag {
+    display: inline-block;
+    font-size: 0.62rem;
+    letter-spacing: 0.1em;
+    color: var(--ink-faint);
+    margin-bottom: 5px;
+  }
+
+  .ski.recursive .ski-tag { color: var(--accent-soft); }
+  .ski.recursive .ski-tag .dot { color: var(--accent); }
+
+  .ski-note {
+    margin: 0 0 6px;
+    font-size: 0.72rem;
+    color: var(--accent-soft);
+    line-height: 1.4;
+  }
+
+  .ski-code {
+    display: block;
+    font-size: 0.68rem;
+    line-height: 1.5;
+    color: var(--ink-faint);
+    overflow-wrap: break-word;
+    word-break: break-word;
+  }
+
+  .card:target {
+    box-shadow: inset 0 0 0 2px var(--accent);
+  }
+
+  /* ---------- footer ---------- */
+
+  .colophon {
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px solid var(--line);
+    font-size: 0.76rem;
+    color: var(--ink-faint);
+    line-height: 1.7;
+    text-align: center;
+  }
+  .colophon strong { color: var(--ink-soft); }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .card { transition: box-shadow 120ms ease; }
+  }
+
+  .hidden { display: none !important; }
+</style>
+
+<div class="sheet">
+  <header class="masthead">
+    <p class="eyebrow">Combinatory Logic &middot; after Smullyan</p>
+    <h1 class="title">The Aviary</h1>
+    <p class="subtitle">
+      Fifty combinator birds, in the canonical order used by the
+      <code>aviary_kernel</code> registry &mdash; symbol, reduction rule,
+      &lambda;-form, and derived S/K/I basis for each.
+    </p>
+    <div class="frame-rule"><span>&#10070;</span></div>
+  </header>
+
+  <div class="toolbar">
+    <input type="search" id="filter" placeholder="Filter by name or symbol&hellip;" aria-label="Filter birds by name or symbol">
+    <span class="count"><strong id="count">50</strong> of 50 birds</span>
+  </div>
+
+  <main class="grid" id="grid">
+
+      <article class="card" id="bird-B" data-search="b b bluebird">
+        <div class="card-top">
+          <span class="plate">01</span>
+          <span class="arity">ar. 3</span>
+        </div>
+        <div class="symbol">B</div>
+        <h2 class="bird-name">Bluebird</h2>
+        <code class="rule">B a b c = a (b c)</code>
+        <p class="lam">λa b c. a (b c)</p>
+        <div class="ski"><span class="ski-tag">S K I</span><code class="ski-code">S (K S) K</code></div>
+      </article>
+
+      <article class="card" id="bird-B1" data-search="b1 b₁ blackbird">
+        <div class="card-top">
+          <span class="plate">02</span>
+          <span class="arity">ar. 4</span>
+        </div>
+        <div class="symbol">B₁</div>
+        <h2 class="bird-name">Blackbird</h2>
+        <code class="rule">B₁ a b c d = a (b c d)</code>
+        <p class="lam">λa b c d. a (b c d)</p>
+        <div class="ski"><span class="ski-tag">S K I</span><code class="ski-code">S (K S) (S (K K) (S (K S) K))</code></div>
+      </article>
+
+      <article class="card" id="bird-B2" data-search="b2 b₂ bunting">
+        <div class="card-top">
+          <span class="plate">03</span>
+          <span class="arity">ar. 5</span>
+        </div>
+        <div class="symbol">B₂</div>
+        <h2 class="bird-name">Bunting</h2>
+        <code class="rule">B₂ a b c d e = a (b c d e)</code>
+        <p class="lam">λa b c d e. a (b c d e)</p>
+        <div class="ski"><span class="ski-tag">S K I</span><code class="ski-code">S (K S) (S (K K) (S (K S) (S (K K) (S (K S) K))))</code></div>
+      </article>
+
+      <article class="card" id="bird-B3" data-search="b3 b₃ becard">
+        <div class="card-top">
+          <span class="plate">04</span>
+          <span class="arity">ar. 4</span>
+        </div>
+        <div class="symbol">B₃</div>
+        <h2 class="bird-name">Becard</h2>
+        <code class="rule">B₃ a b c d = a (b (c d))</code>
+        <p class="lam">λa b c d. a (b (c d))</p>
+        <div class="ski"><span class="ski-tag">S K I</span><code class="ski-code">S (S (K S) (S (K K) (S (K S) (S (K K) (S (K S) K))))) (K (S (K S) K))</code></div>
+      </article>
+
+      <article class="card" id="bird-C" data-search="c c cardinal">
+        <div class="card-top">
+          <span class="plate">05</span>
+          <span class="arity">ar. 3</span>
+        </div>
+        <div class="symbol">C</div>
+        <h2 class="bird-name">Cardinal</h2>
+        <code class="rule">C a b c = a c b</code>
+        <p class="lam">λa b c. a c b</p>
+        <div class="ski"><span class="ski-tag">S K I</span><code class="ski-code">S (S (K S) (S (K K) S)) (K K)</code></div>
+      </article>
+
+      <article class="card" id="bird-C*" data-search="c* c* cardinal once removed">
+        <div class="card-top">
+          <span class="plate">06</span>
+          <span class="arity">ar. 4</span>
+        </div>
+        <div class="symbol">C*</div>
+        <h2 class="bird-name">Cardinal Once Removed</h2>
+        <code class="rule">C* a b c d = a b d c</code>
+        <p class="lam">λa b c d. a b d c</p>
+        <div class="ski"><span class="ski-tag">S K I</span><code class="ski-code">S (S (K S) (S (K (S (K S))) (S (K (S (K K))) (S (K S))))) (K (K K))</code></div>
+      </article>
+
+      <article class="card" id="bird-C**" data-search="c** c** cardinal twice removed">
+        <div class="card-top">
+          <span class="plate">07</span>
+          <span class="arity">ar. 5</span>
+        </div>
+        <div class="symbol">C**</div>
+        <h2 class="bird-name">Cardinal Twice Removed</h2>
+        <code class="rule">C** a b c d e = a b c e d</code>
+        <p class="lam">λa b c d e. a b c e d</p>
+        <div class="ski"><span class="ski-tag">S K I</span><code class="ski-code">S (S (K S) (S (K (S (K S))) (S (K (S (K (S (K S))))) (S (K (S (K (S (K K))))) (S (K (S (K S)))))))) (K (K (K K)))</code></div>
+      </article>
+
+      <article class="card" id="bird-D" data-search="d d dove">
+        <div class="card-top">
+          <span class="plate">08</span>
+          <span class="arity">ar. 4</span>
+        </div>
+        <div class="symbol">D</div>
+        <h2 class="bird-name">Dove</h2>
+        <code class="rule">D a b c d = a b (c d)</code>
+        <p class="lam">λa b c d. a b (c d)</p>
+        <div class="ski"><span class="ski-tag">S K I</span><code class="ski-code">S (K (S (K S))) (S (K K))</code></div>
+      </article>
+
+      <article class="card" id="bird-D1" data-search="d1 d₁ dickcissel">
+        <div class="card-top">
+          <span class="plate">09</span>
+          <span class="arity">ar. 5</span>
+        </div>
+        <div class="symbol">D₁</div>
+        <h2 class="bird-name">Dickcissel</h2>
+        <code class="rule">D₁ a b c d e = a b c (d e)</code>
+        <p class="lam">λa b c d e. a b c (d e)</p>
+        <div class="ski"><span class="ski-tag">S K I</span><code class="ski-code">S (K (S (K (S (K S))))) (S (K (S (K K))))</code></div>
+      </article>
+
+      <article class="card" id="bird-D2" data-search="d2 d₂ dovekie">
+        <div class="card-top">
+          <span class="plate">10</span>
+          <span class="arity">ar. 5</span>
+        </div>
+        <div class="symbol">D₂</div>
+        <h2 class="bird-name">Dovekie</h2>
+        <code class="rule">D₂ a b c d e = a (b c) (d e)</code>
+        <p class="lam">λa b c d e. a (b c) (d e)</p>
+        <div class="ski"><span class="ski-tag">S K I</span><code class="ski-code">S (K (S (K (S (K S))))) (S (K (S (K (S (K K))))) (S (K S) K))</code></div>
+      </article>
+
+      <article class="card" id="bird-E" data-search="e e eagle">
+        <div class="card-top">
+          <span class="plate">11</span>
+          <span class="arity">ar. 5</span>
+        </div>
+        <div class="symbol">E</div>
+        <h2 class="bird-name">Eagle</h2>
+        <code class="rule">E a b c d e = a b (c d e)</code>
+        <p class="lam">λa b c d e. a b (c d e)</p>
+        <div class="ski"><span class="ski-tag">S K I</span><code class="ski-code">S (K (S (K S))) (S (K (S (K K))) (S (K (S (K S))) (S (K K))))</code></div>
+      </article>
+
+      <article class="card" id="bird-Ê" data-search="ê ê bald eagle e^">
+        <div class="card-top">
+          <span class="plate">12</span>
+          <span class="arity">ar. 7</span>
+        </div>
+        <div class="symbol">Ê</div>
+        <h2 class="bird-name">Bald Eagle<span class="alias">alt. E^</span></h2>
+        <code class="rule">Ê a b c d e f g = a (b c d) (e f g)</code>
+        <p class="lam">λa b c d e f g. a (b c d) (e f g)</p>
+        <div class="ski"><span class="ski-tag">S K I</span><code class="ski-code">S (K (S (K (S (K (S (K S))))))) (S (K (S (K (S (K (S (K K))))))) (S (K (S (K (S (K (S (K S))))))) (S (K (S (K (S (K (S (K K))))))) (S (K S) (S (K K) (S (K S) K))))))</code></div>
+      </article>
+
+      <article class="card" id="bird-F" data-search="f f finch">
+        <div class="card-top">
+          <span class="plate">13</span>
+          <span class="arity">ar. 3</span>
+        </div>
+        <div class="symbol">F</div>
+        <h2 class="bird-name">Finch</h2>
+        <code class="rule">F a b c = c b a</code>
+        <p class="lam">λa b c. c b a</p>
+        <div class="ski"><span class="ski-tag">S K I</span><code class="ski-code">S (K (S (S (K S) (S (K (S I)) K)))) (S (K K) K)</code></div>
+      </article>
+
+      <article class="card" id="bird-F*" data-search="f* f* finch once removed">
+        <div class="card-top">
+          <span class="plate">14</span>
+          <span class="arity">ar. 4</span>
+        </div>
+        <div class="symbol">F*</div>
+        <h2 class="bird-name">Finch Once Removed</h2>
+        <code class="rule">F* a b c d = a d c b</code>
+        <p class="lam">λa b c d. a d c b</p>
+        <div class="ski"><span class="ski-tag">S K I</span><code class="ski-code">S (S (K S) (S (K K) (S (K S) (S (K (S (K S))) (S (S (K S) (S (K K) S)) (K K)))))) (K (S (K K) K))</code></div>
+      </article>
+
+      <article class="card" id="bird-F**" data-search="f** f** finch twice removed">
+        <div class="card-top">
+          <span class="plate">15</span>
+          <span class="arity">ar. 5</span>
+        </div>
+        <div class="symbol">F**</div>
+        <h2 class="bird-name">Finch Twice Removed</h2>
+        <code class="rule">F** a b c d e = a b e d c</code>
+        <p class="lam">λa b c d e. a b e d c</p>
+        <div class="ski"><span class="ski-tag">S K I</span><code class="ski-code">S (S (K S) (S (K (S (K S))) (S (K (S (K K))) (S (K (S (K S))) (S (K (S (K (S (K S))))) (S (S (K S) (S (K (S (K S))) (S (K (S (K K))) (S (K S))))) (K (K K)))))))) (K (K (S (K K) K)))</code></div>
+      </article>
+
+      <article class="card" id="bird-G" data-search="g g goldfinch">
+        <div class="card-top">
+          <span class="plate">16</span>
+          <span class="arity">ar. 4</span>
+        </div>
+        <div class="symbol">G</div>
+        <h2 class="bird-name">Goldfinch</h2>
+        <code class="rule">G a b c d = a d (b c)</code>
+        <p class="lam">λa b c d. a d (b c)</p>
+        <div class="ski"><span class="ski-tag">S K I</span><code class="ski-code">S (S (K S) (S (K K) (S (K S) (S (K K) S)))) (K (S (K K)))</code></div>
+      </article>
+
+      <article class="card" id="bird-H" data-search="h h hummingbird">
+        <div class="card-top">
+          <span class="plate">17</span>
+          <span class="arity">ar. 3</span>
+        </div>
+        <div class="symbol">H</div>
+        <h2 class="bird-name">Hummingbird</h2>
+        <code class="rule">H a b c = a b c b</code>
+        <p class="lam">λa b c. a b c b</p>
+        <div class="ski"><span class="ski-tag">S K I</span><code class="ski-code">S (S (K S) (S (K S))) (K K)</code></div>
+      </article>
+
+      <article class="card" id="bird-I" data-search="i i identity (idiot)">
+        <div class="card-top">
+          <span class="plate">18</span>
+          <span class="arity">ar. 1</span>
+        </div>
+        <div class="symbol">I</div>
+        <h2 class="bird-name">Identity (Idiot)</h2>
+        <code class="rule">I a = a</code>
+        <p class="lam">λa. a</p>
+        <div class="ski"><span class="ski-tag">S K I</span><code class="ski-code">I</code></div>
+      </article>
+
+      <article class="card" id="bird-I*" data-search="i* i* identity once removed">
+        <div class="card-top">
+          <span class="plate">19</span>
+          <span class="arity">ar. 2</span>
+        </div>
+        <div class="symbol">I*</div>
+        <h2 class="bird-name">Identity Once Removed</h2>
+        <code class="rule">I* a b = a b</code>
+        <p class="lam">λa b. a b</p>
+        <div class="ski"><span class="ski-tag">S K I</span><code class="ski-code">I</code></div>
+      </article>
+
+      <article class="card" id="bird-I**" data-search="i** i** identity twice removed">
+        <div class="card-top">
+          <span class="plate">20</span>
+          <span class="arity">ar. 3</span>
+        </div>
+        <div class="symbol">I**</div>
+        <h2 class="bird-name">Identity Twice Removed</h2>
+        <code class="rule">I** a b c = a b c</code>
+        <p class="lam">λa b c. a b c</p>
+        <div class="ski"><span class="ski-tag">S K I</span><code class="ski-code">I</code></div>
+      </article>
+
+      <article class="card" id="bird-J" data-search="j j jay">
+        <div class="card-top">
+          <span class="plate">21</span>
+          <span class="arity">ar. 4</span>
+        </div>
+        <div class="symbol">J</div>
+        <h2 class="bird-name">Jay</h2>
+        <code class="rule">J a b c d = a b (a d c)</code>
+        <p class="lam">λa b c d. a b (a d c)</p>
+        <div class="ski"><span class="ski-tag">S K I</span><code class="ski-code">S (S (K S) (S (K (S (K S))) (S (K (S (K K))) (S (K (S (K S))) (S (K K)))))) (S (K K) (S (S (K S) (S (K K) S)) (K K)))</code></div>
+      </article>
+
+      <article class="card" id="bird-K" data-search="k k kestrel">
+        <div class="card-top">
+          <span class="plate">22</span>
+          <span class="arity">ar. 2</span>
+        </div>
+        <div class="symbol">K</div>
+        <h2 class="bird-name">Kestrel</h2>
+        <code class="rule">K a b = a</code>
+        <p class="lam">λa b. a</p>
+        <div class="ski"><span class="ski-tag">S K I</span><code class="ski-code">K</code></div>
+      </article>
+
+      <article class="card" id="bird-Ki" data-search="ki ki kite">
+        <div class="card-top">
+          <span class="plate">23</span>
+          <span class="arity">ar. 2</span>
+        </div>
+        <div class="symbol">Ki</div>
+        <h2 class="bird-name">Kite</h2>
+        <code class="rule">Ki a b = b</code>
+        <p class="lam">λa b. b</p>
+        <div class="ski"><span class="ski-tag">S K I</span><code class="ski-code">K I</code></div>
+      </article>
+
+      <article class="card" id="bird-KM" data-search="km km konstant mocker">
+        <div class="card-top">
+          <span class="plate">24</span>
+          <span class="arity">ar. 2</span>
+        </div>
+        <div class="symbol">KM</div>
+        <h2 class="bird-name">Konstant Mocker</h2>
+        <code class="rule">KM a b = b b</code>
+        <p class="lam">λa b. b b</p>
+        <div class="ski"><span class="ski-tag">S K I</span><code class="ski-code">K (S I I)</code></div>
+      </article>
+
+      <article class="card" id="bird-KM'" data-search="km' km' crossed konstant mocker">
+        <div class="card-top">
+          <span class="plate">25</span>
+          <span class="arity">ar. 2</span>
+        </div>
+        <div class="symbol">KM'</div>
+        <h2 class="bird-name">Crossed Konstant Mocker</h2>
+        <code class="rule">KM' a b = a a</code>
+        <p class="lam">λa b. a a</p>
+        <div class="ski"><span class="ski-tag">S K I</span><code class="ski-code">S (K K) (S I I)</code></div>
+      </article>
+
+      <article class="card" id="bird-L" data-search="l l lark">
+        <div class="card-top">
+          <span class="plate">26</span>
+          <span class="arity">ar. 2</span>
+        </div>
+        <div class="symbol">L</div>
+        <h2 class="bird-name">Lark</h2>
+        <code class="rule">L a b = a (b b)</code>
+        <p class="lam">λa b. a (b b)</p>
+        <div class="ski"><span class="ski-tag">S K I</span><code class="ski-code">S (S (K S) K) (K (S I I))</code></div>
+      </article>
+
+      <article class="card" id="bird-M" data-search="m m mockingbird">
+        <div class="card-top">
+          <span class="plate">27</span>
+          <span class="arity">ar. 1</span>
+        </div>
+        <div class="symbol">M</div>
+        <h2 class="bird-name">Mockingbird</h2>
+        <code class="rule">M a = a a</code>
+        <p class="lam">λa. a a</p>
+        <div class="ski"><span class="ski-tag">S K I</span><code class="ski-code">S I I</code></div>
+      </article>
+
+      <article class="card" id="bird-M2" data-search="m2 m₂ double mockingbird">
+        <div class="card-top">
+          <span class="plate">28</span>
+          <span class="arity">ar. 2</span>
+        </div>
+        <div class="symbol">M₂</div>
+        <h2 class="bird-name">Double Mockingbird</h2>
+        <code class="rule">M₂ a b = a b (a b)</code>
+        <p class="lam">λa b. a b (a b)</p>
+        <div class="ski"><span class="ski-tag">S K I</span><code class="ski-code">S S I</code></div>
+      </article>
+
+      <article class="card" id="bird-O" data-search="o o owl">
+        <div class="card-top">
+          <span class="plate">29</span>
+          <span class="arity">ar. 2</span>
+        </div>
+        <div class="symbol">O</div>
+        <h2 class="bird-name">Owl</h2>
+        <code class="rule">O a b = b (a b)</code>
+        <p class="lam">λa b. b (a b)</p>
+        <div class="ski"><span class="ski-tag">S K I</span><code class="ski-code">S I</code></div>
+      </article>
+
+      <article class="card" id="bird-Φ" data-search="φ φ phoenix phi">
+        <div class="card-top">
+          <span class="plate">30</span>
+          <span class="arity">ar. 4</span>
+        </div>
+        <div class="symbol">Φ</div>
+        <h2 class="bird-name">Phoenix<span class="alias">alt. Phi</span></h2>
+        <code class="rule">Φ a b c d = a (b d) (c d)</code>
+        <p class="lam">λa b c d. a (b d) (c d)</p>
+        <div class="ski"><span class="ski-tag">S K I</span><code class="ski-code">S (K (S (K S))) (S (K S) K)</code></div>
+      </article>
+
+      <article class="card" id="bird-Ψ" data-search="ψ ψ psi bird psi">
+        <div class="card-top">
+          <span class="plate">31</span>
+          <span class="arity">ar. 4</span>
+        </div>
+        <div class="symbol">Ψ</div>
+        <h2 class="bird-name">Psi Bird<span class="alias">alt. Psi</span></h2>
+        <code class="rule">Ψ a b c d = a (b c) (b d)</code>
+        <p class="lam">λa b c d. a (b c) (b d)</p>
+        <div class="ski"><span class="ski-tag">S K I</span><code class="ski-code">S (S (K S) (S (K (S (K S))) (S (K (S (K (S (K S))))) (S (K (S (K (S (K K))))) (S (K S) K))))) (K K)</code></div>
+      </article>
+
+      <article class="card" id="bird-Q" data-search="q q queer bird">
+        <div class="card-top">
+          <span class="plate">32</span>
+          <span class="arity">ar. 3</span>
+        </div>
+        <div class="symbol">Q</div>
+        <h2 class="bird-name">Queer Bird</h2>
+        <code class="rule">Q a b c = b (a c)</code>
+        <p class="lam">λa b c. b (a c)</p>
+        <div class="ski"><span class="ski-tag">S K I</span><code class="ski-code">S (K (S (S (K S) K))) K</code></div>
+      </article>
+
+      <article class="card" id="bird-Q1" data-search="q1 q₁ quixotic bird">
+        <div class="card-top">
+          <span class="plate">33</span>
+          <span class="arity">ar. 3</span>
+        </div>
+        <div class="symbol">Q₁</div>
+        <h2 class="bird-name">Quixotic Bird</h2>
+        <code class="rule">Q₁ a b c = a (c b)</code>
+        <p class="lam">λa b c. a (c b)</p>
+        <div class="ski"><span class="ski-tag">S K I</span><code class="ski-code">S (S (K S) (S (K K) (S (K S) K))) (K (S (K (S I)) K))</code></div>
+      </article>
+
+      <article class="card" id="bird-Q2" data-search="q2 q₂ quizzical bird">
+        <div class="card-top">
+          <span class="plate">34</span>
+          <span class="arity">ar. 3</span>
+        </div>
+        <div class="symbol">Q₂</div>
+        <h2 class="bird-name">Quizzical Bird</h2>
+        <code class="rule">Q₂ a b c = b (c a)</code>
+        <p class="lam">λa b c. b (c a)</p>
+        <div class="ski"><span class="ski-tag">S K I</span><code class="ski-code">S (K (S (S (K S) K))) (S (K K) (S (K (S I)) K))</code></div>
+      </article>
+
+      <article class="card" id="bird-Q3" data-search="q3 q₃ quirky bird">
+        <div class="card-top">
+          <span class="plate">35</span>
+          <span class="arity">ar. 3</span>
+        </div>
+        <div class="symbol">Q₃</div>
+        <h2 class="bird-name">Quirky Bird</h2>
+        <code class="rule">Q₃ a b c = c (a b)</code>
+        <p class="lam">λa b c. c (a b)</p>
+        <div class="ski"><span class="ski-tag">S K I</span><code class="ski-code">S (K (S (K (S I)))) (S (K K))</code></div>
+      </article>
+
+      <article class="card" id="bird-Q4" data-search="q4 q₄ quacky bird">
+        <div class="card-top">
+          <span class="plate">36</span>
+          <span class="arity">ar. 3</span>
+        </div>
+        <div class="symbol">Q₄</div>
+        <h2 class="bird-name">Quacky Bird</h2>
+        <code class="rule">Q₄ a b c = c (b a)</code>
+        <p class="lam">λa b c. c (b a)</p>
+        <div class="ski"><span class="ski-tag">S K I</span><code class="ski-code">S (K (S (K (S I)))) (S (K (S (K K))) (S (K (S I)) K))</code></div>
+      </article>
+
+      <article class="card" id="bird-R" data-search="r r robin">
+        <div class="card-top">
+          <span class="plate">37</span>
+          <span class="arity">ar. 3</span>
+        </div>
+        <div class="symbol">R</div>
+        <h2 class="bird-name">Robin</h2>
+        <code class="rule">R a b c = b c a</code>
+        <p class="lam">λa b c. b c a</p>
+        <div class="ski"><span class="ski-tag">S K I</span><code class="ski-code">S (K (S S)) (S (K K) K)</code></div>
+      </article>
+
+      <article class="card" id="bird-R*" data-search="r* r* robin once removed">
+        <div class="card-top">
+          <span class="plate">38</span>
+          <span class="arity">ar. 4</span>
+        </div>
+        <div class="symbol">R*</div>
+        <h2 class="bird-name">Robin Once Removed</h2>
+        <code class="rule">R* a b c d = a c d b</code>
+        <p class="lam">λa b c d. a c d b</p>
+        <div class="ski"><span class="ski-tag">S K I</span><code class="ski-code">S (S (K S) (S (K K) (S (K S) (S (K S))))) (K (S (K K) K))</code></div>
+      </article>
+
+      <article class="card" id="bird-R**" data-search="r** r** robin twice removed">
+        <div class="card-top">
+          <span class="plate">39</span>
+          <span class="arity">ar. 5</span>
+        </div>
+        <div class="symbol">R**</div>
+        <h2 class="bird-name">Robin Twice Removed</h2>
+        <code class="rule">R** a b c d e = a b d e c</code>
+        <p class="lam">λa b c d e. a b d e c</p>
+        <div class="ski"><span class="ski-tag">S K I</span><code class="ski-code">S (S (K S) (S (K (S (K S))) (S (K (S (K K))) (S (K (S (K S))) (S (K (S (K S)))))))) (K (K (S (K K) K)))</code></div>
+      </article>
+
+      <article class="card" id="bird-S" data-search="s s starling">
+        <div class="card-top">
+          <span class="plate">40</span>
+          <span class="arity">ar. 3</span>
+        </div>
+        <div class="symbol">S</div>
+        <h2 class="bird-name">Starling</h2>
+        <code class="rule">S a b c = a c (b c)</code>
+        <p class="lam">λa b c. a c (b c)</p>
+        <div class="ski"><span class="ski-tag">S K I</span><code class="ski-code">S</code></div>
+      </article>
+
+      <article class="card" id="bird-T" data-search="t t thrush">
+        <div class="card-top">
+          <span class="plate">41</span>
+          <span class="arity">ar. 2</span>
+        </div>
+        <div class="symbol">T</div>
+        <h2 class="bird-name">Thrush</h2>
+        <code class="rule">T a b = b a</code>
+        <p class="lam">λa b. b a</p>
+        <div class="ski"><span class="ski-tag">S K I</span><code class="ski-code">S (K (S I)) K</code></div>
+      </article>
+
+      <article class="card" id="bird-U" data-search="u u turing bird">
+        <div class="card-top">
+          <span class="plate">42</span>
+          <span class="arity">ar. 2</span>
+        </div>
+        <div class="symbol">U</div>
+        <h2 class="bird-name">Turing Bird</h2>
+        <code class="rule">U a b = b (a a b)</code>
+        <p class="lam">λa b. b (a a b)</p>
+        <div class="ski"><span class="ski-tag">S K I</span><code class="ski-code">S (K (S I)) (S I I)</code></div>
+      </article>
+
+      <article class="card" id="bird-V" data-search="v v vireo">
+        <div class="card-top">
+          <span class="plate">43</span>
+          <span class="arity">ar. 3</span>
+        </div>
+        <div class="symbol">V</div>
+        <h2 class="bird-name">Vireo</h2>
+        <code class="rule">V a b c = c a b</code>
+        <p class="lam">λa b c. c a b</p>
+        <div class="ski"><span class="ski-tag">S K I</span><code class="ski-code">S (S (K S) (S (K K) (S (K S) (S (K (S I)) K)))) (K K)</code></div>
+      </article>
+
+      <article class="card" id="bird-V*" data-search="v* v* vireo once removed">
+        <div class="card-top">
+          <span class="plate">44</span>
+          <span class="arity">ar. 4</span>
+        </div>
+        <div class="symbol">V*</div>
+        <h2 class="bird-name">Vireo Once Removed</h2>
+        <code class="rule">V* a b c d = a d b c</code>
+        <p class="lam">λa b c d. a d b c</p>
+        <div class="ski"><span class="ski-tag">S K I</span><code class="ski-code">S (S (K S) (S (K (S (K S))) (S (K (S (K K))) (S (K (S (K S))) (S (S (K S) (S (K K) S)) (K K)))))) (K (K K))</code></div>
+      </article>
+
+      <article class="card" id="bird-V**" data-search="v** v** vireo twice removed">
+        <div class="card-top">
+          <span class="plate">45</span>
+          <span class="arity">ar. 5</span>
+        </div>
+        <div class="symbol">V**</div>
+        <h2 class="bird-name">Vireo Twice Removed</h2>
+        <code class="rule">V** a b c d e = a b e c d</code>
+        <p class="lam">λa b c d e. a b e c d</p>
+        <div class="ski"><span class="ski-tag">S K I</span><code class="ski-code">S (S (K S) (S (K (S (K S))) (S (K (S (K (S (K S))))) (S (K (S (K (S (K K))))) (S (K (S (K (S (K S))))) (S (S (K S) (S (K (S (K S))) (S (K (S (K K))) (S (K S))))) (K (K K)))))))) (K (K (K K)))</code></div>
+      </article>
+
+      <article class="card" id="bird-W" data-search="w w warbler">
+        <div class="card-top">
+          <span class="plate">46</span>
+          <span class="arity">ar. 2</span>
+        </div>
+        <div class="symbol">W</div>
+        <h2 class="bird-name">Warbler</h2>
+        <code class="rule">W a b = a b b</code>
+        <p class="lam">λa b. a b b</p>
+        <div class="ski"><span class="ski-tag">S K I</span><code class="ski-code">S S (K I)</code></div>
+      </article>
+
+      <article class="card" id="bird-W*" data-search="w* w* warbler once removed">
+        <div class="card-top">
+          <span class="plate">47</span>
+          <span class="arity">ar. 3</span>
+        </div>
+        <div class="symbol">W*</div>
+        <h2 class="bird-name">Warbler Once Removed</h2>
+        <code class="rule">W* a b c = a b c c</code>
+        <p class="lam">λa b c. a b c c</p>
+        <div class="ski"><span class="ski-tag">S K I</span><code class="ski-code">S (S (K S) (S (K S))) (K (K I))</code></div>
+      </article>
+
+      <article class="card" id="bird-W**" data-search="w** w** warbler twice removed">
+        <div class="card-top">
+          <span class="plate">48</span>
+          <span class="arity">ar. 4</span>
+        </div>
+        <div class="symbol">W**</div>
+        <h2 class="bird-name">Warbler Twice Removed</h2>
+        <code class="rule">W** a b c d = a b c d d</code>
+        <p class="lam">λa b c d. a b c d d</p>
+        <div class="ski"><span class="ski-tag">S K I</span><code class="ski-code">S (S (K S) (S (K (S (K S))) (S (K (S (K S)))))) (K (K (K I)))</code></div>
+      </article>
+
+      <article class="card" id="bird-W'" data-search="w' w' converse warbler">
+        <div class="card-top">
+          <span class="plate">49</span>
+          <span class="arity">ar. 2</span>
+        </div>
+        <div class="symbol">W'</div>
+        <h2 class="bird-name">Converse Warbler</h2>
+        <code class="rule">W' a b = b a a</code>
+        <p class="lam">λa b. b a a</p>
+        <div class="ski"><span class="ski-tag">S K I</span><code class="ski-code">S (S (K S) (S (K (S I)) K)) K</code></div>
+      </article>
+
+      <article class="card" id="bird-Y" data-search="y y sage bird">
+        <div class="card-top">
+          <span class="plate">50</span>
+          <span class="arity">ar. 1</span>
+        </div>
+        <div class="symbol">Y</div>
+        <h2 class="bird-name">Sage Bird</h2>
+        <code class="rule">Y a = a (Y a)</code>
+        <p class="lam">λa. a (Y a)</p>
+        <div class="ski recursive"><span class="ski-tag">S K I <span class="dot">&#10022;</span></span><p class="ski-note">Self-referential &mdash; carries its own fixed S/K/I form; not derived by bracket abstraction.</p><code class="ski-code">S (K (S I I)) (S (S (K S) K) (K (S I I)))</code></div>
+      </article>
+  </main>
+
+  <footer class="colophon">
+    <p>
+      Rules are the primitive registry data; every &lambda;-form and S/K/I
+      column is <strong>derived</strong> by Curry bracket abstraction at
+      render time &mdash; only the Sage Bird (Y) carries an explicit,
+      hand&#8209;verified fixed-point form.
+    </p>
+    <p>
+      After Raymond Smullyan, <em>To Mock a Mockingbird</em> (1985), and
+      Chris Rathman&rsquo;s Combinator Birds chart &middot; generated by the
+      <strong>Aviary</strong> combinator-calculus Jupyter kernel.
+    </p>
+  </footer>
+</div>
+
+<script>
+  (function () {
+    var input = document.getElementById("filter");
+    var cards = Array.prototype.slice.call(document.querySelectorAll(".card"));
+    var count = document.getElementById("count");
+
+    input.addEventListener("input", function () {
+      var q = input.value.trim().toLowerCase();
+      var shown = 0;
+      cards.forEach(function (card) {
+        var haystack = card.getAttribute("data-search");
+        var match = !q || haystack.indexOf(q) !== -1;
+        card.classList.toggle("hidden", !match);
+        if (match) shown++;
+      });
+      count.textContent = shown;
+    });
+  })();
+</script>

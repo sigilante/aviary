@@ -1,0 +1,6 @@
+{
+  "argv": ["python", "-m", "aviary_kernel", "-f", "{connection_file}"],
+  "display_name": "Aviary (Combinator Calculus)",
+  "language": "combinatory-logic",
+  "interrupt_mode": "signal"
+}
